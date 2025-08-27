@@ -1,10 +1,21 @@
+export type Difficulty = "easy" | "medium" | "hard" | "expert";
+
+export enum GameStatus {
+  NICKNAME = "nickname",
+  MENU = "menu",
+  PLAYING = "playing",
+  PAUSED = "paused",
+  GAME_OVER = "game_over",
+  LEADERBOARD = "leaderboard",
+}
+
 export interface GameState {
-  isPlaying: boolean;
-  isPaused: boolean;
-  playerScore: number;
-  aiScore: number;
+  status: GameStatus;
+  playerPoints: number;
+  aiPoints: number;
   difficulty: Difficulty;
   gameStarted: boolean;
+  isPaused: boolean;
 }
 
 export interface BallState {
@@ -13,12 +24,15 @@ export interface BallState {
   dx: number;
   dy: number;
   speed: number;
+  size: number;
 }
 
 export interface PaddleState {
   y: number;
   height: number;
+  width: number;
   speed: number;
+  isPlayer: boolean;
 }
 
 export interface TrailPoint {
@@ -28,12 +42,12 @@ export interface TrailPoint {
   id: number;
 }
 
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
-
 export interface LeaderboardEntry {
+  nickname: string;
   score: number;
   difficulty: Difficulty;
   date: string;
+  timestamp: number;
 }
 
 export interface GameConfig {
@@ -42,5 +56,21 @@ export interface GameConfig {
   paddleHeight: number;
   gameWidth: number;
   gameHeight: number;
-  winningScore: number;
+  maxPoints: number;
+  fps: number;
+}
+
+export interface DifficultyConfig {
+  aiSpeed: number;
+  aiReactionTime: number;
+  ballSpeedMultiplier: number;
+  aiAccuracy: number;
+}
+
+export interface CollisionResult {
+  ball: BallState;
+  playerScored: boolean;
+  aiScored: boolean;
+  shouldAwardPoint: boolean;
+  gameOver: boolean;
 }

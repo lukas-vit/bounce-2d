@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom smooth animations for ball and trail */
+.ball-trail {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.ball-main {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Smooth trail fade effect */
+.trail-fade {
+  transition: opacity 0.075s ease-out, transform 0.075s ease-out;
+}

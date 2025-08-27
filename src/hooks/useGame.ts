@@ -1,224 +1,299 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { GameState, BallState, PaddleState, TrailPoint, Difficulty } from '../types/game';
-import { DIFFICULTY_CONFIG, GAME_CONFIG, saveToLeaderboard } from '../utils/gameUtils';
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  GameState,
+  BallState,
+  PaddleState,
+  TrailPoint,
+  Difficulty,
+  GameStatus,
+} from "../types/game";
+import {
+  GAME_CONFIG,
+  DIFFICULTY_CONFIG,
+  createInitialBall,
+  createInitialPaddle,
+  TrailManager,
+  saveToLeaderboard,
+} from "../utils/gameUtils";
 
 export const useGame = () => {
+  // Game state
   const [gameState, setGameState] = useState<GameState>({
-    isPlaying: false,
+    status: GameStatus.MENU,
+    playerPoints: 0,
+    aiPoints: 0,
+    difficulty: "medium",
+    gameStarted: false,
     isPaused: false,
-    playerScore: 0,
-    aiScore: 0,
-    difficulty: 'medium',
-    gameStarted: false
   });
 
-  const [ball, setBall] = useState<BallState>({
-    x: GAME_CONFIG.gameWidth / 2,
-    y: GAME_CONFIG.gameHeight / 2,
-    dx: 3,
-    dy: 2,
-    speed: 3
-  });
-
-  const [playerPaddle, setPlayerPaddle] = useState<PaddleState>({
-    y: GAME_CONFIG.gameHeight / 2 - GAME_CONFIG.paddleHeight / 2,
-    height: GAME_CONFIG.paddleHeight,
-    speed: 6
-  });
-
-  const [aiPaddle, setAiPaddle] = useState<PaddleState>({
-    y: GAME_CONFIG.gameHeight / 2 - GAME_CONFIG.paddleHeight / 2,
-    height: GAME_CONFIG.paddleHeight,
-    speed: 4
-  });
-
+  // Game entities
+  const [ball, setBall] = useState<BallState>(() =>
+    createInitialBall("medium")
+  );
+  const [playerPaddle, setPlayerPaddle] = useState<PaddleState>(() =>
+    createInitialPaddle(true)
+  );
+  const [aiPaddle, setAiPaddle] = useState<PaddleState>(() =>
+    createInitialPaddle(false)
+  );
   const [ballTrail, setBallTrail] = useState<TrailPoint[]>([]);
+
+  // Refs for game loop and state tracking
   const gameLoopRef = useRef<number>();
-  const trailIdRef = useRef(0);
-  const keysRef = useRef<Set<string>>(new Set());
+  const lastHitByPlayerRef = useRef(false);
+  const pointScoredRef = useRef(false);
 
-  const resetBall = useCallback((direction: number = 1) => {
-    const config = DIFFICULTY_CONFIG[gameState.difficulty];
-    const speed = 3 * config.ballSpeedMultiplier;
-    
-    setBall({
-      x: GAME_CONFIG.gameWidth / 2,
-      y: GAME_CONFIG.gameHeight / 2 + (Math.random() - 0.5) * 100,
-      dx: direction * speed * (Math.random() > 0.5 ? 1 : -1),
-      dy: (Math.random() - 0.5) * speed * 0.8,
-      speed
-    });
+  // Game control functions
+  const startGame = useCallback((difficulty: Difficulty) => {
+    console.log("Starting game with difficulty:", difficulty);
+
+    setGameState((prev) => ({
+      ...prev,
+      status: GameStatus.PLAYING,
+      gameStarted: true,
+      difficulty,
+      playerPoints: 0,
+      aiPoints: 0,
+      isPaused: false,
+    }));
+
+    // Reset entities for new game
+    const initialBall = createInitialBall(difficulty);
+    console.log("Initial ball state:", initialBall);
+    setBall(initialBall);
+    setPlayerPaddle(createInitialPaddle(true));
+    setAiPaddle(createInitialPaddle(false));
     setBallTrail([]);
-  }, [gameState.difficulty]);
 
-  const updateAI = useCallback((ballPos: BallState, aiPos: PaddleState) => {
+    // Reset flags
+    lastHitByPlayerRef.current = false;
+    pointScoredRef.current = false;
+  }, []);
+
+  const pauseGame = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      status:
+        prev.status === GameStatus.PLAYING
+          ? GameStatus.PAUSED
+          : GameStatus.PLAYING,
+      isPaused: !prev.isPaused,
+    }));
+  }, []);
+
+  const resetGame = useCallback(() => {
+    setGameState({
+      status: GameStatus.MENU,
+      playerPoints: 0,
+      aiPoints: 0,
+      difficulty: "medium",
+      gameStarted: false,
+      isPaused: false,
+    });
+
+    setBall(createInitialBall("medium"));
+    setPlayerPaddle(createInitialPaddle(true));
+    setAiPaddle(createInitialPaddle(false));
+    setBallTrail([]);
+
+    // Reset trail position to match initial ball position
+    TrailManager.resetTrailPosition(
+      createInitialBall("medium").x,
+      createInitialBall("medium").y
+    );
+
+    lastHitByPlayerRef.current = false;
+    pointScoredRef.current = false;
+  }, []);
+
+  const endGame = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      status: GameStatus.GAME_OVER,
+      isPaused: false,
+    }));
+  }, []);
+
+  // Entity update functions
+  const updatePlayerPaddle = useCallback((mouseY: number) => {
+    setPlayerPaddle((prev) => ({
+      ...prev,
+      y: Math.max(
+        0,
+        Math.min(GAME_CONFIG.gameHeight - prev.height, mouseY - prev.height / 2)
+      ),
+    }));
+  }, []);
+
+  const updateAIPaddle = useCallback(() => {
     const config = DIFFICULTY_CONFIG[gameState.difficulty];
-    const paddleCenter = aiPos.y + aiPos.height / 2;
-    const targetY = ballPos.y;
+    const paddleCenter = aiPaddle.y + aiPaddle.height / 2;
+    const targetY = ball.y;
     const diff = targetY - paddleCenter;
-    
+
     // Add some randomness based on difficulty
     const reaction = config.aiReactionTime;
     const movement = diff * config.aiSpeed * reaction;
-    
-    let newY = aiPos.y + movement;
-    newY = Math.max(0, Math.min(GAME_CONFIG.gameHeight - aiPos.height, newY));
-    
-    return { ...aiPos, y: newY };
-  }, [gameState.difficulty]);
 
-  const checkCollisions = useCallback((ballPos: BallState) => {
-    let newBall = { ...ballPos };
-    
-    // Top and bottom boundaries
-    if (ballPos.y <= 0 || ballPos.y >= GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize) {
-      newBall.dy *= -1;
-      newBall.y = Math.max(0, Math.min(GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize, ballPos.y));
-    }
-    
-    // Player paddle collision
-    if (ballPos.x <= GAME_CONFIG.paddleWidth + GAME_CONFIG.ballSize &&
-        ballPos.y + GAME_CONFIG.ballSize >= playerPaddle.y &&
-        ballPos.y <= playerPaddle.y + playerPaddle.height) {
-      newBall.dx = Math.abs(newBall.dx);
-      const hitPos = (ballPos.y + GAME_CONFIG.ballSize / 2 - playerPaddle.y) / playerPaddle.height - 0.5;
-      newBall.dy += hitPos * 2;
-      newBall.speed *= 1.05;
-    }
-    
-    // AI paddle collision
-    if (ballPos.x + GAME_CONFIG.ballSize >= GAME_CONFIG.gameWidth - GAME_CONFIG.paddleWidth &&
-        ballPos.y + GAME_CONFIG.ballSize >= aiPaddle.y &&
-        ballPos.y <= aiPaddle.y + aiPaddle.height) {
-      newBall.dx = -Math.abs(newBall.dx);
-      const hitPos = (ballPos.y + GAME_CONFIG.ballSize / 2 - aiPaddle.y) / aiPaddle.height - 0.5;
-      newBall.dy += hitPos * 2;
-      newBall.speed *= 1.05;
-    }
-    
-    return newBall;
-  }, [playerPaddle, aiPaddle]);
+    let newY = aiPaddle.y + movement;
+    newY = Math.max(
+      0,
+      Math.min(GAME_CONFIG.gameHeight - aiPaddle.height, newY)
+    );
 
+    setAiPaddle((prev) => ({ ...prev, y: newY }));
+  }, [aiPaddle, ball, gameState.difficulty]);
+
+  // Main game loop
   const gameLoop = useCallback(() => {
-    if (!gameState.isPlaying || gameState.isPaused) return;
+    if (gameState.status !== GameStatus.PLAYING || gameState.isPaused) {
+      return;
+    }
 
     // Update AI paddle
-    setAiPaddle(prevAi => updateAI(ball, prevAi));
+    updateAIPaddle();
 
-    // Update ball position
-    setBall(prevBall => {
-      let newBall = {
+    // Update ball position and handle collisions inline
+    setBall((prevBall) => {
+      // Calculate new position
+      const newX = prevBall.x + prevBall.dx;
+      const newY = prevBall.y + prevBall.dy;
+
+      // Create new ball object
+      const newBall = {
         ...prevBall,
-        x: prevBall.x + prevBall.dx,
-        y: prevBall.y + prevBall.dy
+        x: newX,
+        y: newY,
       };
 
-      newBall = checkCollisions(newBall);
+      // Handle top and bottom boundaries
+      if (
+        newBall.y <= 0 ||
+        newBall.y >= GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize
+      ) {
+        newBall.dy *= -1;
+        newBall.y = Math.max(
+          0,
+          Math.min(GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize, newBall.y)
+        );
+      }
 
-      // Add trail point
-      setBallTrail(prevTrail => {
-        const newTrail = [...prevTrail, {
-          x: newBall.x,
-          y: newBall.y,
-          opacity: 1,
-          id: trailIdRef.current++
-        }];
-        
-        // Update trail opacities and remove old ones
-        return newTrail
-          .map(point => ({ ...point, opacity: point.opacity * 0.85 }))
-          .filter(point => point.opacity > 0.1)
-          .slice(-12);
-      });
+      // Handle player paddle collision
+      if (
+        newBall.x <= GAME_CONFIG.paddleWidth + GAME_CONFIG.ballSize &&
+        newBall.y + GAME_CONFIG.ballSize >= playerPaddle.y &&
+        newBall.y <= playerPaddle.y + playerPaddle.height
+      ) {
+        newBall.dx = Math.abs(newBall.dx);
+        const hitPos =
+          (newBall.y + GAME_CONFIG.ballSize / 2 - playerPaddle.y) /
+            playerPaddle.height -
+          0.5;
+        newBall.dy += hitPos * 2;
+        newBall.speed *= 1.1;
+        lastHitByPlayerRef.current = true;
+      }
+
+      // Handle AI paddle collision
+      if (
+        newBall.x + GAME_CONFIG.ballSize >=
+          GAME_CONFIG.gameWidth - GAME_CONFIG.paddleWidth &&
+        newBall.y + GAME_CONFIG.ballSize >= aiPaddle.y &&
+        newBall.y <= aiPaddle.y + aiPaddle.height
+      ) {
+        newBall.dx = -Math.abs(newBall.dx);
+        const hitPos =
+          (newBall.y + GAME_CONFIG.ballSize / 2 - aiPaddle.y) /
+            aiPaddle.height -
+          0.5;
+        newBall.dy += hitPos * 2;
+        newBall.speed *= 1.1;
+      }
+
+      // Add trail point with the exact same position as the ball
+      setBallTrail((prevTrail) =>
+        TrailManager.addTrailPoint(prevTrail, newBall.x, newBall.y)
+      );
 
       // Check for scoring
       if (newBall.x < 0) {
-        // Ball went off left side - AI scores
-        setGameState(prev => {
-          const newAiScore = prev.aiScore + 1;
-          if (newAiScore >= GAME_CONFIG.winningScore) {
-            return { ...prev, isPlaying: false, aiScore: newAiScore };
-          }
-          return { ...prev, aiScore: newAiScore };
-        });
-        setTimeout(() => resetBall(1), 500);
+        // Ball went off left side - Player missed, game over
+        setGameState((prev) => ({
+          ...prev,
+          status: GameStatus.GAME_OVER,
+        }));
+        return prevBall; // Don't update ball position yet
       } else if (newBall.x > GAME_CONFIG.gameWidth) {
         // Ball went off right side - Player scores
-        setGameState(prev => {
-          const newPlayerScore = prev.playerScore + 1;
-          if (newPlayerScore >= GAME_CONFIG.winningScore) {
-            saveToLeaderboard(newPlayerScore, prev.difficulty);
-            return { ...prev, isPlaying: false, playerScore: newPlayerScore };
+        setGameState((prev) => {
+          const newPlayerPoints = prev.playerPoints + 1;
+          if (newPlayerPoints >= GAME_CONFIG.maxPoints) {
+            saveToLeaderboard(newPlayerPoints, prev.difficulty);
+            return {
+              ...prev,
+              status: GameStatus.GAME_OVER,
+              playerPoints: newPlayerPoints,
+            };
           }
-          return { ...prev, playerScore: newPlayerScore };
+          return { ...prev, playerPoints: newPlayerPoints };
         });
-        setTimeout(() => resetBall(-1), 500);
+        setTimeout(() => {
+          setBall(createInitialBall(gameState.difficulty, -1));
+          setBallTrail([]);
+        }, 500);
+        return prevBall; // Don't update ball position yet
       }
 
       return newBall;
     });
 
-
+    // Continue game loop
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState.isPlaying, gameState.isPaused, checkCollisions, updateAI, resetBall]);
+  }, [
+    gameState.status,
+    gameState.isPaused,
+    updateAIPaddle,
+    playerPaddle,
+    aiPaddle,
+    gameState.difficulty,
+  ]);
 
+  // Game loop effect
   useEffect(() => {
-    if (gameState.isPlaying && !gameState.isPaused) {
+    if (gameState.status === GameStatus.PLAYING && !gameState.isPaused) {
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
-    
+
     return () => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [gameLoop, gameState.isPlaying, gameState.isPaused]);
+  }, [gameLoop, gameState.status, gameState.isPaused]);
 
-  const startGame = (difficulty: Difficulty) => {
-    setGameState(prev => ({
-      ...prev,
-      isPlaying: true,
-      gameStarted: true,
-      difficulty,
-      playerScore: 0,
-      aiScore: 0
-    }));
-    setTimeout(() => resetBall(Math.random() > 0.5 ? 1 : -1), 100);
-  };
-
-  const pauseGame = () => {
-    setGameState(prev => ({ ...prev, isPaused: !prev.isPaused }));
-  };
-
-  const resetGame = () => {
-    setGameState({
-      isPlaying: false,
-      isPaused: false,
-      playerScore: 0,
-      aiScore: 0,
-      difficulty: 'medium',
-      gameStarted: false
-    });
-    resetBall();
-    setBallTrail([]);
-  };
-
-  const updatePlayerPaddle = (mouseY: number) => {
-    setPlayerPaddle(prev => ({
-      ...prev,
-      y: Math.max(0, Math.min(GAME_CONFIG.gameHeight - prev.height, mouseY - prev.height / 2))
-    }));
-  };
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    };
+  }, []);
 
   return {
+    // State
     gameState,
     ball,
     playerPaddle,
     aiPaddle,
     ballTrail,
+
+    // Actions
     startGame,
     pauseGame,
     resetGame,
-    updatePlayerPaddle
+    endGame,
+    updatePlayerPaddle,
   };
 };

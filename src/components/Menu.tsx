@@ -1,15 +1,22 @@
-import React from 'react';
-import { Play, Trophy, Settings } from 'lucide-react';
-import { Difficulty } from '../types/game';
-import { formatDifficulty, getDifficultyColor } from '../utils/gameUtils';
+import React from "react";
+import { Play, Trophy, User, Edit3 } from "lucide-react";
+import { Difficulty } from "../types/game";
+import { formatDifficulty, getDifficultyColor } from "../utils/gameUtils";
 
 interface MenuProps {
   onStartGame: (difficulty: Difficulty) => void;
   onShowLeaderboard: () => void;
+  onChangeNickname: () => void;
+  currentNickname: string;
 }
 
-const Menu: React.FC<MenuProps> = ({ onStartGame, onShowLeaderboard }) => {
-  const difficulties: Difficulty[] = ['easy', 'medium', 'hard', 'expert'];
+const Menu: React.FC<MenuProps> = ({
+  onStartGame,
+  onShowLeaderboard,
+  onChangeNickname,
+  currentNickname,
+}) => {
+  const difficulties: Difficulty[] = ["easy", "medium", "hard", "expert"];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8">
@@ -17,12 +24,40 @@ const Menu: React.FC<MenuProps> = ({ onStartGame, onShowLeaderboard }) => {
         <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
           PING PONG
         </h1>
-        <p className="text-xl text-gray-400">Challenge the AI in this modern Pong experience</p>
+        <p className="text-xl text-gray-400 mb-2">
+          Challenge the AI in this modern Pong experience
+        </p>
+        <p className="text-lg text-cyan-400 font-medium">
+          Welcome back, {currentNickname}! 🏓
+        </p>
+      </div>
+
+      {/* Current Nickname Display */}
+      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-4 mb-6 shadow-lg max-w-md w-full">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-cyan-400" />
+            <span className="text-white font-medium">
+              Playing as:{" "}
+              <span className="text-cyan-400">{currentNickname}</span>
+            </span>
+          </div>
+          <button
+            onClick={onChangeNickname}
+            className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors duration-300 
+              hover:bg-gray-700 px-3 py-1 rounded-lg text-sm"
+          >
+            <Edit3 className="w-4 h-4" />
+            Change
+          </button>
+        </div>
       </div>
 
       <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 shadow-2xl max-w-md w-full">
-        <h2 className="text-2xl font-semibold mb-6 text-center text-white">Select Difficulty</h2>
-        
+        <h2 className="text-2xl font-semibold mb-6 text-center text-white">
+          Select Difficulty
+        </h2>
+
         <div className="space-y-4 mb-8">
           {difficulties.map((difficulty) => (
             <button
@@ -38,11 +73,15 @@ const Menu: React.FC<MenuProps> = ({ onStartGame, onShowLeaderboard }) => {
                   {formatDifficulty(difficulty)}
                 </span>
               </span>
-              <span className={`text-sm font-semibold ${getDifficultyColor(difficulty)}`}>
-                {difficulty === 'easy' && 'Beginner'}
-                {difficulty === 'medium' && 'Normal'}
-                {difficulty === 'hard' && 'Challenging'}
-                {difficulty === 'expert' && 'Insane'}
+              <span
+                className={`text-sm font-semibold ${getDifficultyColor(
+                  difficulty
+                )}`}
+              >
+                {difficulty === "easy" && "Beginner"}
+                {difficulty === "medium" && "Normal"}
+                {difficulty === "hard" && "Challenging"}
+                {difficulty === "expert" && "Insane"}
               </span>
             </button>
           ))}
