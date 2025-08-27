@@ -13,8 +13,9 @@ import {
   createInitialBall,
   createInitialPaddle,
   TrailManager,
-  saveToLeaderboard,
+  getLeaderboard,
 } from "../utils/gameUtils";
+import { LeaderboardEntry } from "../types/game";
 
 export const useGame = () => {
   // Game state
@@ -129,11 +130,23 @@ export const useGame = () => {
   const updateAIPaddle = useCallback(() => {
     const config = DIFFICULTY_CONFIG[gameState.difficulty];
     const paddleCenter = aiPaddle.y + aiPaddle.height / 2;
-    const targetY = ball.y;
+
+    // Predict where the ball will be when it reaches the AI paddle
+    const timeToReachPaddle =
+      (GAME_CONFIG.gameWidth - GAME_CONFIG.paddleWidth - ball.x) /
+      Math.abs(ball.dx);
+    const predictedY = ball.y + ball.dy * timeToReachPaddle;
+
+    // Target the center of the predicted ball position
+    const targetY = Math.max(
+      GAME_CONFIG.ballSize / 2,
+      Math.min(GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize / 2, predictedY)
+    );
+
     const diff = targetY - paddleCenter;
 
-    // Add some randomness based on difficulty
-    const reaction = config.aiReactionTime;
+    // Make AI movement more responsive and accurate
+    const reaction = Math.min(0.1, config.aiReactionTime); // Faster reaction
     const movement = diff * config.aiSpeed * reaction;
 
     let newY = aiPaddle.y + movement;
@@ -141,6 +154,15 @@ export const useGame = () => {
       0,
       Math.min(GAME_CONFIG.gameHeight - aiPaddle.height, newY)
     );
+
+    // Emergency positioning: if ball is very close and AI might miss, snap to perfect position
+    if (ball.x > GAME_CONFIG.gameWidth * 0.7 && Math.abs(diff) > 10) {
+      newY = targetY - aiPaddle.height / 2;
+      newY = Math.max(
+        0,
+        Math.min(GAME_CONFIG.gameHeight - aiPaddle.height, newY)
+      );
+    }
 
     setAiPaddle((prev) => ({ ...prev, y: newY }));
   }, [aiPaddle, ball, gameState.difficulty]);
@@ -193,14 +215,32 @@ export const useGame = () => {
         newBall.dy += hitPos * 2;
         newBall.speed *= 1.1;
         lastHitByPlayerRef.current = true;
+
+        // Award point for successful hit and increase ball speed
+        setGameState((prev) => ({
+          ...prev,
+          playerPoints: prev.playerPoints + 1,
+        }));
+
+        // Increase ball speed when player scores (based on difficulty)
+        const config = DIFFICULTY_CONFIG[gameState.difficulty];
+        setBall((prevBall) => ({
+          ...prevBall,
+          speed: prevBall.speed * config.speedIncreaseMultiplier,
+          dx:
+            (prevBall.dx >= 0 ? 1 : -1) *
+            prevBall.speed *
+            config.speedIncreaseMultiplier,
+          dy: prevBall.dy * config.speedIncreaseMultiplier,
+        }));
       }
 
-      // Handle AI paddle collision
+      // Handle AI paddle collision - make it more forgiving
       if (
         newBall.x + GAME_CONFIG.ballSize >=
-          GAME_CONFIG.gameWidth - GAME_CONFIG.paddleWidth &&
-        newBall.y + GAME_CONFIG.ballSize >= aiPaddle.y &&
-        newBall.y <= aiPaddle.y + aiPaddle.height
+          GAME_CONFIG.gameWidth - GAME_CONFIG.paddleWidth - 2 &&
+        newBall.y + GAME_CONFIG.ballSize >= aiPaddle.y - 5 &&
+        newBall.y <= aiPaddle.y + aiPaddle.height + 5
       ) {
         newBall.dx = -Math.abs(newBall.dx);
         const hitPos =
@@ -208,7 +248,10 @@ export const useGame = () => {
             aiPaddle.height -
           0.5;
         newBall.dy += hitPos * 2;
-        newBall.speed *= 1.1;
+
+        // Small speed increase when AI hits (proportional to difficulty)
+        const config = DIFFICULTY_CONFIG[gameState.difficulty];
+        newBall.speed *= 1 + (config.speedIncreaseMultiplier - 1) * 0.3; // 30% of the difficulty-based increase
       }
 
       // Add trail point with the exact same position as the ball
@@ -219,27 +262,45 @@ export const useGame = () => {
       // Check for scoring
       if (newBall.x < 0) {
         // Ball went off left side - Player missed, game over
-        setGameState((prev) => ({
-          ...prev,
-          status: GameStatus.GAME_OVER,
-        }));
+        setGameState((prev) => {
+          // Save to leaderboard when game ends
+          const leaderboard = getLeaderboard();
+          const nickname =
+            localStorage.getItem("bounce-nickname") || "Anonymous";
+          const newEntry = {
+            nickname,
+            score: prev.playerPoints,
+            difficulty: prev.difficulty,
+            date: new Date().toLocaleDateString(),
+            timestamp: Date.now(),
+          };
+
+          leaderboard.push(newEntry);
+          leaderboard.sort(
+            (a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score
+          );
+          const finalLeaderboard = leaderboard.slice(0, 10);
+          localStorage.setItem(
+            "bounce-leaderboard",
+            JSON.stringify(finalLeaderboard)
+          );
+
+          return {
+            ...prev,
+            status: GameStatus.GAME_OVER,
+          };
+        });
         return prevBall; // Don't update ball position yet
       } else if (newBall.x > GAME_CONFIG.gameWidth) {
-        // Ball went off right side - Player scores
-        setGameState((prev) => {
-          const newPlayerPoints = prev.playerPoints + 1;
-          if (newPlayerPoints >= GAME_CONFIG.maxPoints) {
-            saveToLeaderboard(newPlayerPoints, prev.difficulty);
-            return {
-              ...prev,
-              status: GameStatus.GAME_OVER,
-              playerPoints: newPlayerPoints,
-            };
-          }
-          return { ...prev, playerPoints: newPlayerPoints };
-        });
+        // Ball went off right side - AI missed, reset ball position but keep speed
         setTimeout(() => {
-          setBall(createInitialBall(gameState.difficulty, -1));
+          setBall((prevBall) => ({
+            ...prevBall,
+            x: GAME_CONFIG.gameWidth / 2,
+            y: GAME_CONFIG.gameHeight / 2 + (Math.random() - 0.5) * 100,
+            dx: -Math.abs(prevBall.speed), // Keep current speed, move left
+            dy: (Math.random() - 0.5) * prevBall.speed * 0.8,
+          }));
           setBallTrail([]);
         }, 500);
         return prevBall; // Don't update ball position yet
@@ -256,7 +317,6 @@ export const useGame = () => {
     updateAIPaddle,
     playerPaddle,
     aiPaddle,
-    gameState.difficulty,
   ]);
 
   // Game loop effect
@@ -295,5 +355,6 @@ export const useGame = () => {
     resetGame,
     endGame,
     updatePlayerPaddle,
+    setGameState,
   };
 };

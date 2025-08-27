@@ -1,37 +1,37 @@
 import {
-  Difficulty,
-  LeaderboardEntry,
-  GameConfig,
-  DifficultyConfig,
   BallState,
+  Difficulty,
+  DifficultyConfig,
+  GameConfig,
+  LeaderboardEntry,
   PaddleState,
   TrailPoint,
 } from "../types/game";
 
 export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
   easy: {
-    aiSpeed: 0.6,
-    aiReactionTime: 0.8,
+    aiSpeed: 1.2,
+    aiReactionTime: 0.3,
     ballSpeedMultiplier: 2.0,
-    aiAccuracy: 0.7,
+    speedIncreaseMultiplier: 1.08, // 8% increase per point
   },
   medium: {
-    aiSpeed: 0.8,
-    aiReactionTime: 0.6,
+    aiSpeed: 1.4,
+    aiReactionTime: 0.2,
     ballSpeedMultiplier: 2.5,
-    aiAccuracy: 0.8,
+    speedIncreaseMultiplier: 1.12, // 12% increase per point
   },
   hard: {
-    aiSpeed: 1.0,
-    aiReactionTime: 0.4,
+    aiSpeed: 1.6,
+    aiReactionTime: 0.15,
     ballSpeedMultiplier: 3.0,
-    aiAccuracy: 0.9,
+    speedIncreaseMultiplier: 1.16, // 16% increase per point
   },
   expert: {
-    aiSpeed: 1.3,
-    aiReactionTime: 0.2,
+    aiSpeed: 1.8,
+    aiReactionTime: 0.1,
     ballSpeedMultiplier: 3.5,
-    aiAccuracy: 0.95,
+    speedIncreaseMultiplier: 1.2, // 20% increase per point
   },
 };
 
@@ -181,8 +181,7 @@ export class PhysicsEngine {
 
     // Add randomness based on difficulty
     const reaction = config.aiReactionTime;
-    const accuracy = config.aiAccuracy;
-    const movement = diff * config.aiSpeed * reaction * accuracy;
+    const movement = diff * config.aiSpeed * reaction;
 
     let newY = aiPaddle.y + movement;
     newY = Math.max(

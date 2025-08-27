@@ -64,7 +64,7 @@ export interface DifficultyConfig {
   aiSpeed: number;
   aiReactionTime: number;
   ballSpeedMultiplier: number;
-  aiAccuracy: number;
+  speedIncreaseMultiplier: number;
 }
 
 export interface CollisionResult {

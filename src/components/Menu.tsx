@@ -20,16 +20,10 @@ const Menu: React.FC<MenuProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8">
-      <div className="text-center mb-12">
+      <div className="text-center mb-6">
         <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
           PING PONG
         </h1>
-        <p className="text-xl text-gray-400 mb-2">
-          Challenge the AI in this modern Pong experience
-        </p>
-        <p className="text-lg text-cyan-400 font-medium">
-          Welcome back, {currentNickname}! 🏓
-        </p>
       </div>
 
       {/* Current Nickname Display */}
@@ -97,11 +91,36 @@ const Menu: React.FC<MenuProps> = ({
           <Trophy className="w-5 h-5" />
           <span className="text-lg font-medium text-white">Leaderboard</span>
         </button>
+
+        {/* Difficulty Info */}
+        <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
+          <h3 className="text-sm font-semibold text-gray-300 mb-2">
+            Difficulty Effects:
+          </h3>
+          <div className="text-xs text-gray-400 space-y-1">
+            <p>
+              • <span className="text-green-400">Easy:</span> Gentle start, slow
+              & steady
+            </p>
+            <p>
+              • <span className="text-yellow-400">Medium:</span> Balanced
+              challenge, smooth progression
+            </p>
+            <p>
+              • <span className="text-orange-400">Hard:</span> Fast-paced, gets
+              wild quickly
+            </p>
+            <p>
+              • <span className="text-red-400">Expert:</span> Lightning fast,
+              pure chaos!
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 text-center text-gray-500">
         <p className="text-sm">Move your mouse to control the left paddle</p>
-        <p className="text-xs mt-2">First to 7 points wins!</p>
+        <p className="text-xs mt-2">Get as many points as possible!</p>
       </div>
     </div>
   );
