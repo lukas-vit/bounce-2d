@@ -1,22 +1,38 @@
-import React from 'react';
-import { Trophy, ArrowLeft, Medal, Award } from 'lucide-react';
-import { getLeaderboard, formatDifficulty, getDifficultyColor } from '../utils/gameUtils';
+import React from "react";
+import { Trophy, ArrowLeft, Medal, Award } from "lucide-react";
+import {
+  getLeaderboard,
+  formatDifficulty,
+  getDifficultyColor,
+} from "../utils/gameUtils";
 
 interface LeaderboardProps {
   onBack: () => void;
+  currentNickname?: string;
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
+const Leaderboard: React.FC<LeaderboardProps> = ({
+  onBack,
+  currentNickname,
+}) => {
   const leaderboard = getLeaderboard();
 
-  console.log('Leaderboard data:', leaderboard); // Debug log
+  console.log("Leaderboard data:", leaderboard); // Debug log
 
   const getRankIcon = (index: number) => {
     switch (index) {
-      case 0: return <Trophy className="w-6 h-6 text-yellow-400" />;
-      case 1: return <Medal className="w-6 h-6 text-gray-300" />;
-      case 2: return <Award className="w-6 h-6 text-amber-600" />;
-      default: return <div className="w-6 h-6 flex items-center justify-center text-gray-400 font-bold">{index + 1}</div>;
+      case 0:
+        return <Trophy className="w-6 h-6 text-yellow-400" />;
+      case 1:
+        return <Medal className="w-6 h-6 text-gray-300" />;
+      case 2:
+        return <Award className="w-6 h-6 text-amber-600" />;
+      default:
+        return (
+          <div className="w-6 h-6 flex items-center justify-center text-gray-400 font-bold">
+            {index + 1}
+          </div>
+        );
     }
   };
 
@@ -32,11 +48,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
             <ArrowLeft className="w-5 h-5" />
             Back
           </button>
-          
           <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
             Leaderboard
           </h1>
-          
           <div className="w-20"></div> {/* Spacer for centering */}
         </div>
 
@@ -44,7 +58,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
           <div className="text-center py-12">
             <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <p className="text-xl text-gray-400 mb-2">No scores yet!</p>
-            <p className="text-gray-500">Play a game to set your first record</p>
+            <p className="text-gray-500">
+              Play a game to set your first record
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -52,23 +68,36 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
               <div
                 key={index}
                 className={`flex items-center justify-between p-4 rounded-xl transition-all duration-300 
-                  ${index < 3 
-                    ? 'bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-yellow-400/30' 
-                    : 'bg-gray-700/50 border border-gray-600'
+                  ${
+                    index < 3
+                      ? "bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-yellow-400/30"
+                      : "bg-gray-700/50 border border-gray-600"
                   } hover:bg-gray-600/50 transform hover:scale-102`}
               >
                 <div className="flex items-center gap-4">
                   {getRankIcon(index)}
                   <div>
-                    <div className="text-lg font-semibold text-white">
-                      Score: {entry.score}
+                    <div
+                      className={`text-lg font-semibold ${
+                        entry.nickname === currentNickname
+                          ? "text-cyan-400"
+                          : "text-white"
+                      }`}
+                    >
+                      {entry.nickname}
                     </div>
-                    <div className="text-sm text-gray-400">{entry.date}</div>
+                    <div className="text-sm text-gray-400">
+                      Score: {entry.score} • {entry.date}
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
-                  <div className={`text-sm font-medium ${getDifficultyColor(entry.difficulty)}`}>
+                  <div
+                    className={`text-sm font-medium ${getDifficultyColor(
+                      entry.difficulty
+                    )}`}
+                  >
                     {formatDifficulty(entry.difficulty)}
                   </div>
                 </div>
