@@ -41,6 +41,16 @@ export interface Ball {
   vx: number;
   vy: number;
   size: number;
+  particles: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    age: number;
+    size: number;
+    type: "sparkle" | "glow" | "trail";
+  }>;
+  lastParticleSpawn: number;
 }
 
 export interface Paddle {

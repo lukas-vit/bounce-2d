@@ -16,12 +16,17 @@ import {
 export const createBall = (): Ball => {
   const dimensions = getGameDimensions();
   const ballPhysics = getBallPhysicsConstants();
+  const initialX = dimensions.width / 2;
+  const initialY = dimensions.height / 2;
+
   return {
-    x: dimensions.width / 2,
-    y: dimensions.height / 2,
+    x: initialX,
+    y: initialY,
     vx: dimensions.initialBallSpeed,
     vy: (Math.random() - 0.5) * ballPhysics.randomVelocityRange,
     size: dimensions.ballSize,
+    particles: [],
+    lastParticleSpawn: 0,
   };
 };
 
@@ -127,6 +132,62 @@ export const updateBall = (ball: Ball): Ball => {
     newBall.x = 0;
   } else if (newBall.x > dimensions.width) {
     newBall.x = dimensions.width;
+  }
+
+  // Particle system - create engaging particles at regular intervals
+  const currentTime = Date.now();
+  const particleSpawnInterval = 60; // Spawn particles every 60ms for smooth effect
+
+  if (currentTime - ball.lastParticleSpawn > particleSpawnInterval) {
+    // Create new particles with different types for variety
+    const particleTypes: Array<"sparkle" | "glow" | "trail"> = [
+      "sparkle",
+      "glow",
+      "trail",
+    ];
+    const randomType =
+      particleTypes[Math.floor(Math.random() * particleTypes.length)];
+
+    // Add some randomness to particle movement
+    const particleVx = ball.vx * 0.1 + (Math.random() - 0.5) * 2;
+    const particleVy = ball.vy * 0.1 + (Math.random() - 0.5) * 2;
+
+    const newParticle = {
+      x: ball.x,
+      y: ball.y,
+      vx: particleVx,
+      vy: particleVy,
+      age: 0,
+      size: ball.size * (0.3 + Math.random() * 0.4), // Random size variation
+      type: randomType,
+    };
+
+    // Add new particle and keep only recent ones for performance
+    const updatedParticles = [newParticle, ...ball.particles.slice(0, 19)]; // Keep 20 particles max
+    newBall.particles = updatedParticles;
+    newBall.lastParticleSpawn = currentTime;
+  } else {
+    // Update existing particles
+    newBall.particles = ball.particles
+      .map((particle) => ({
+        ...particle,
+        x: particle.x + particle.vx,
+        y: particle.y + particle.vy,
+        age: particle.age + 1,
+        // Add gravity effect for more natural movement
+        vy: particle.vy + 0.1,
+      }))
+      .filter((particle) => {
+        // Remove particles that are too old or off-screen
+        const dimensions = getGameDimensions();
+        return (
+          particle.age < 80 &&
+          particle.x > -50 &&
+          particle.x < dimensions.width + 50 &&
+          particle.y > -50 &&
+          particle.y < dimensions.height + 50
+        );
+      });
   }
 
   return newBall;
