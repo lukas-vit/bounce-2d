@@ -68,7 +68,6 @@ If time permits, the following features could be implemented:
 
 ### Platform & Accessibility
 
-- Responsive design for mobile and tablet devices
 - Keyboard controls and screen reader support
 - Accessibility improvements
 

@@ -19,3 +19,59 @@
 .trail-fade {
   transition: opacity 0.075s ease-out, transform 0.075s ease-out;
 }
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Prevent scrolling on mobile */
+  body {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  /* Ensure game board fits on mobile */
+  .game-board {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Optimize touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent zoom on double tap */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Optimize for mobile performance */
+  .game-board * {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Prevent text selection during gameplay */
+.game-board * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Ensure smooth animations on mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}

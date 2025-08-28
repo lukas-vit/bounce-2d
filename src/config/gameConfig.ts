@@ -12,6 +12,12 @@ export const GAME_CONFIG = {
     initialBallSpeed: 10,
     fps: 60,
     playerPaddleSpeed: 8,
+    mobileWidth: 400,
+    mobileHeight: 200,
+    mobileBallSize: 8,
+    mobilePaddleWidth: 6,
+    mobilePaddleHeight: 40,
+    mobileBallSpeed: 5,
   },
 
   powerUps: {
@@ -180,14 +186,37 @@ export const getAllDifficulties = (): Difficulty[] =>
  * Gets the game dimensions and physics constants
  * @returns Object containing game dimensions and physics values
  */
-export const getGameDimensions = () => ({
-  width: GAME_CONFIG.game.width,
-  height: GAME_CONFIG.game.height,
-  ballSize: GAME_CONFIG.game.ballSize,
-  paddleWidth: GAME_CONFIG.game.paddleWidth,
-  paddleHeight: GAME_CONFIG.game.paddleHeight,
-  initialBallSpeed: GAME_CONFIG.game.initialBallSpeed,
-});
+export const getGameDimensions = () => {
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    return {
+      width: GAME_CONFIG.game.mobileWidth,
+      height: GAME_CONFIG.game.mobileHeight,
+      ballSize: GAME_CONFIG.game.mobileBallSize,
+      paddleWidth: GAME_CONFIG.game.mobilePaddleWidth,
+      paddleHeight: GAME_CONFIG.game.mobilePaddleHeight,
+      initialBallSpeed: GAME_CONFIG.game.mobileBallSpeed,
+    };
+  }
+
+  return {
+    width: GAME_CONFIG.game.width,
+    height: GAME_CONFIG.game.height,
+    ballSize: GAME_CONFIG.game.ballSize,
+    paddleWidth: GAME_CONFIG.game.paddleWidth,
+    paddleHeight: GAME_CONFIG.game.paddleHeight,
+    initialBallSpeed: GAME_CONFIG.game.initialBallSpeed,
+  };
+};
+
+/**
+ * Checks if the current device is mobile
+ * @returns True if the device is mobile, false otherwise
+ */
+export const isMobileDevice = () => {
+  return window.innerWidth <= 768;
+};
 
 /**
  * Gets the player paddle movement speed

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { getGameDimensions } from "../config/gameConfig";
 
 interface GameBoardProps {
@@ -7,13 +7,23 @@ interface GameBoardProps {
 }
 
 /**
- * GameBoard component that handles the game board and mouse movement
- * @param onMouseMove - Callback function to handle mouse movement
+ * GameBoard component that handles the game board and mouse/touch movement
+ * @param onMouseMove - Callback function to handle mouse/touch movement
  * @param children - React nodes to render inside the game board
  */
 const GameBoard: React.FC<GameBoardProps> = ({ onMouseMove, children }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const dimensions = getGameDimensions();
+  const [dimensions, setDimensions] = useState(getGameDimensions());
+
+  // Update dimensions when window resizes
+  useEffect(() => {
+    const handleResize = () => {
+      setDimensions(getGameDimensions());
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (canvasRef.current) {
@@ -23,15 +33,39 @@ const GameBoard: React.FC<GameBoardProps> = ({ onMouseMove, children }) => {
     }
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent scrolling
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const touch = e.touches[0];
+      const relativeY = touch.clientY - rect.top;
+      onMouseMove(relativeY);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent scrolling
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const touch = e.touches[0];
+      const relativeY = touch.clientY - rect.top;
+      onMouseMove(relativeY);
+    }
+  };
+
   return (
     <div
       ref={canvasRef}
-      className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden select-none"
+      className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden select-none game-board"
       style={{
         width: `${dimensions.width}px`,
         height: `${dimensions.height}px`,
+        maxWidth: "100vw",
+        maxHeight: "100vh",
       }}
       onMouseMove={handleMouseMove}
+      onTouchMove={handleTouchMove}
+      onTouchStart={handleTouchStart}
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
@@ -55,16 +89,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ onMouseMove, children }) => {
       />
 
       <div className="absolute left-1/2 top-0 w-0.5 h-full opacity-30 transform -translate-x-0.5">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-cyan-400 mb-2"
-            style={{
-              height: "12px",
-              marginBottom: "8px",
-            }}
-          />
-        ))}
+        {Array.from({ length: Math.floor(dimensions.height / 20) }).map(
+          (_, i) => (
+            <div
+              key={i}
+              className="bg-cyan-400 mb-2"
+              style={{
+                height: "12px",
+                marginBottom: "8px",
+              }}
+            />
+          )
+        )}
       </div>
 
       {children}
