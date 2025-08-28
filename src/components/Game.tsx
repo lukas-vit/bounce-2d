@@ -18,12 +18,14 @@ import PowerUp from "./PowerUp";
 interface GameProps {
   difficulty: Difficulty;
   onEndGame: () => void;
+  onGameOver: () => void;
   currentNickname: string;
 }
 
 const Game: React.FC<GameProps> = ({
   difficulty,
   onEndGame,
+  onGameOver,
   currentNickname,
 }) => {
   const {
@@ -33,11 +35,13 @@ const Game: React.FC<GameProps> = ({
     aiPaddle,
     powerUps,
     activePowerUps,
+    extraLifeConsumed,
     startGame,
     pauseGame,
     resetGame,
     updatePlayerPaddle,
     setGameState,
+    resetExtraLifeConsumed,
   } = useGame();
 
   // Track when extra life is used for display
@@ -50,18 +54,31 @@ const Game: React.FC<GameProps> = ({
     }
   }, [difficulty, startGame, gameState.status]);
 
-  // Track previous extra lives count to detect when one is used
-  const prevExtraLivesRef = React.useRef(gameState.extraLives);
-
-  // Show extra life used indicator when extra lives decrease
+  // Show extra life used indicator when extra life is consumed
   useEffect(() => {
-    if (prevExtraLivesRef.current > gameState.extraLives) {
+    if (extraLifeConsumed) {
       setShowExtraLifeUsed(true);
       const timer = setTimeout(() => setShowExtraLifeUsed(false), 3000); // Show for 3 seconds
+
+      // Reset the flag after showing the toast
+      setTimeout(() => {
+        resetExtraLifeConsumed();
+      }, 100);
+
       return () => clearTimeout(timer);
     }
-    prevExtraLivesRef.current = gameState.extraLives;
-  }, [gameState.extraLives]);
+  }, [extraLifeConsumed, resetExtraLifeConsumed]);
+
+  // Handle game over state transition
+  useEffect(() => {
+    if (gameState.status === GameStatus.GAME_OVER) {
+      // Small delay to show the game over screen before transitioning
+      const timer = setTimeout(() => {
+        onGameOver();
+      }, 2000); // 2 seconds delay
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.status, onGameOver]);
 
   const handleMouseMove = (y: number) => {
     updatePlayerPaddle(y);

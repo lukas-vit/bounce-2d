@@ -36,6 +36,9 @@ export const useGame = () => {
     extraLives: 0,
   });
 
+  // Callback for when extra life is consumed
+  const [extraLifeConsumed, setExtraLifeConsumed] = useState(false);
+
   // Game entities
   const [ball, setBall] = useState<Ball>(createBall());
   const [playerPaddle, setPlayerPaddle] = useState<Paddle>(createPaddle(true));
@@ -293,6 +296,10 @@ export const useGame = () => {
     }));
   }, []);
 
+  const resetExtraLifeConsumed = useCallback(() => {
+    setExtraLifeConsumed(false);
+  }, []);
+
   // Update player paddle position
   const updatePlayerPaddle = useCallback((mouseY: number) => {
     const dimensions = getGameDimensions();
@@ -338,14 +345,14 @@ export const useGame = () => {
           ballPhysics.hitPositionMultiplier;
         newBall.vy += hitPos * getBallSpeedMultiplier();
 
-        // Award point
+        // Award point only once per collision
         setGameState((prev) => ({
           ...prev,
           playerScore: prev.playerScore + 1,
         }));
 
         // Spawn power-up every 5 points (but only if none exists)
-        if (gameState.playerScore % 5 === 0) {
+        if ((gameState.playerScore + 1) % 5 === 0) {
           spawnPowerUp();
         }
 
@@ -418,9 +425,15 @@ export const useGame = () => {
             extraLives: prev.extraLives - 1,
           }));
 
-          // With extra life, just reverse the ball direction and continue playing
-          // Don't reset position or speed - let the ball continue naturally
+          // Set flag to show extra life consumed toast
+          setExtraLifeConsumed(true);
+
+          // With extra life, reset ball to center and reverse direction
+          // This gives the player a fair chance to continue
+          newBall.x = getGameDimensions().width / 2;
+          newBall.y = getGameDimensions().height / 2;
           newBall.vx = -Math.abs(newBall.vx); // Reverse direction towards player
+          newBall.vy = (Math.random() - 0.5) * 4; // Add some randomness to make it interesting
         } else {
           // No extra lives - game over
           saveToLeaderboard(gameState.playerScore, gameState.difficulty);
@@ -492,11 +505,13 @@ export const useGame = () => {
     aiPaddle,
     powerUps,
     activePowerUps,
+    extraLifeConsumed,
     startGame,
     pauseGame,
     resetGame,
     endGame,
     updatePlayerPaddle,
     setGameState,
+    resetExtraLifeConsumed,
   };
 };
