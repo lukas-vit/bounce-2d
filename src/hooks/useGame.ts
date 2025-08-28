@@ -13,9 +13,8 @@ import {
   createInitialBall,
   createInitialPaddle,
   TrailManager,
-  getLeaderboard,
+  saveToLeaderboard,
 } from "../utils/gameUtils";
-import { LeaderboardEntry } from "../types/game";
 
 export const useGame = () => {
   // Game state
@@ -44,6 +43,8 @@ export const useGame = () => {
   const gameLoopRef = useRef<number>();
   const lastHitByPlayerRef = useRef(false);
   const pointScoredRef = useRef(false);
+  const stuckBallCounterRef = useRef(0);
+  const lastBallPositionRef = useRef({ x: 0, y: 0 });
 
   // Game control functions
   const startGame = useCallback((difficulty: Difficulty) => {
@@ -70,6 +71,8 @@ export const useGame = () => {
     // Reset flags
     lastHitByPlayerRef.current = false;
     pointScoredRef.current = false;
+    stuckBallCounterRef.current = 0;
+    lastBallPositionRef.current = { x: initialBall.x, y: initialBall.y };
   }, []);
 
   const pauseGame = useCallback(() => {
@@ -106,6 +109,11 @@ export const useGame = () => {
 
     lastHitByPlayerRef.current = false;
     pointScoredRef.current = false;
+    stuckBallCounterRef.current = 0;
+    lastBallPositionRef.current = {
+      x: GAME_CONFIG.gameWidth / 2,
+      y: GAME_CONFIG.gameHeight / 2,
+    };
   }, []);
 
   const endGame = useCallback(() => {
@@ -182,12 +190,40 @@ export const useGame = () => {
       const newX = prevBall.x + prevBall.dx;
       const newY = prevBall.y + prevBall.dy;
 
+      // Check if ball is stuck (not moving)
+      const ballMoved =
+        Math.abs(prevBall.x - lastBallPositionRef.current.x) > 0.1 ||
+        Math.abs(prevBall.y - lastBallPositionRef.current.y) > 0.1;
+
+      if (!ballMoved) {
+        stuckBallCounterRef.current++;
+        if (stuckBallCounterRef.current > 120) {
+          // 2 seconds at 60fps
+          console.warn("Ball appears to be stuck, resetting position");
+          return createInitialBall(gameState.difficulty, 1);
+        }
+      } else {
+        stuckBallCounterRef.current = 0;
+        lastBallPositionRef.current = { x: prevBall.x, y: prevBall.y };
+      }
+
       // Create new ball object
       const newBall = {
         ...prevBall,
         x: newX,
         y: newY,
       };
+
+      // Safety check: ensure velocity components are valid
+      if (
+        isNaN(newBall.dx) ||
+        isNaN(newBall.dy) ||
+        newBall.dx === 0 ||
+        newBall.dy === 0
+      ) {
+        console.warn("Invalid ball velocity detected, resetting ball");
+        return createInitialBall(gameState.difficulty, 1);
+      }
 
       // Handle top and bottom boundaries
       if (
@@ -199,6 +235,13 @@ export const useGame = () => {
           0,
           Math.min(GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize, newBall.y)
         );
+
+        // Ensure the ball doesn't get stuck at boundaries
+        if (newBall.y <= 0) {
+          newBall.y = 1;
+        } else if (newBall.y >= GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize) {
+          newBall.y = GAME_CONFIG.gameHeight - GAME_CONFIG.ballSize - 1;
+        }
       }
 
       // Handle player paddle collision
@@ -213,10 +256,9 @@ export const useGame = () => {
             playerPaddle.height -
           0.5;
         newBall.dy += hitPos * 2;
-        newBall.speed *= 1.1;
         lastHitByPlayerRef.current = true;
 
-        // Award point for successful hit and increase ball speed
+        // Award point for successful hit
         setGameState((prev) => ({
           ...prev,
           playerPoints: prev.playerPoints + 1,
@@ -224,15 +266,20 @@ export const useGame = () => {
 
         // Increase ball speed when player scores (based on difficulty)
         const config = DIFFICULTY_CONFIG[gameState.difficulty];
-        setBall((prevBall) => ({
-          ...prevBall,
-          speed: prevBall.speed * config.speedIncreaseMultiplier,
-          dx:
-            (prevBall.dx >= 0 ? 1 : -1) *
-            prevBall.speed *
-            config.speedIncreaseMultiplier,
-          dy: prevBall.dy * config.speedIncreaseMultiplier,
-        }));
+        newBall.speed *= config.speedIncreaseMultiplier;
+
+        // Cap the maximum speed based on difficulty to prevent the game from becoming unplayable
+        const maxSpeed = config.maxSpeed;
+        newBall.speed = Math.min(newBall.speed, maxSpeed);
+
+        // Update velocity components with the new speed
+        newBall.dx = newBall.speed;
+        newBall.dy = newBall.dy * (newBall.speed / Math.abs(newBall.dx));
+
+        // Ensure the ball is moving in the right direction
+        if (newBall.dx === 0) {
+          newBall.dx = newBall.speed;
+        }
       }
 
       // Handle AI paddle collision - make it more forgiving
@@ -263,27 +310,8 @@ export const useGame = () => {
       if (newBall.x < 0) {
         // Ball went off left side - Player missed, game over
         setGameState((prev) => {
-          // Save to leaderboard when game ends
-          const leaderboard = getLeaderboard();
-          const nickname =
-            localStorage.getItem("bounce-nickname") || "Anonymous";
-          const newEntry = {
-            nickname,
-            score: prev.playerPoints,
-            difficulty: prev.difficulty,
-            date: new Date().toLocaleDateString(),
-            timestamp: Date.now(),
-          };
-
-          leaderboard.push(newEntry);
-          leaderboard.sort(
-            (a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score
-          );
-          const finalLeaderboard = leaderboard.slice(0, 10);
-          localStorage.setItem(
-            "bounce-leaderboard",
-            JSON.stringify(finalLeaderboard)
-          );
+          // Save to leaderboard when game ends using the centralized function
+          saveToLeaderboard(prev.playerPoints, prev.difficulty);
 
           return {
             ...prev,
@@ -294,13 +322,22 @@ export const useGame = () => {
       } else if (newBall.x > GAME_CONFIG.gameWidth) {
         // Ball went off right side - AI missed, reset ball position but keep speed
         setTimeout(() => {
-          setBall((prevBall) => ({
-            ...prevBall,
-            x: GAME_CONFIG.gameWidth / 2,
-            y: GAME_CONFIG.gameHeight / 2 + (Math.random() - 0.5) * 100,
-            dx: -Math.abs(prevBall.speed), // Keep current speed, move left
-            dy: (Math.random() - 0.5) * prevBall.speed * 0.8,
-          }));
+          setBall((prevBall) => {
+            // Ensure the ball has a valid speed based on difficulty
+            const config = DIFFICULTY_CONFIG[gameState.difficulty];
+            const safeSpeed = Math.max(
+              2.5,
+              Math.min(prevBall.speed, config.maxSpeed)
+            );
+            return {
+              ...prevBall,
+              x: GAME_CONFIG.gameWidth / 2,
+              y: GAME_CONFIG.gameHeight / 2 + (Math.random() - 0.5) * 100,
+              dx: -safeSpeed, // Keep current speed, move left
+              dy: (Math.random() - 0.5) * safeSpeed * 0.8,
+              speed: safeSpeed,
+            };
+          });
           setBallTrail([]);
         }, 500);
         return prevBall; // Don't update ball position yet

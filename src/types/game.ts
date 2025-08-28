@@ -56,7 +56,6 @@ export interface GameConfig {
   paddleHeight: number;
   gameWidth: number;
   gameHeight: number;
-  maxPoints: number;
   fps: number;
 }
 
@@ -65,6 +64,7 @@ export interface DifficultyConfig {
   aiReactionTime: number;
   ballSpeedMultiplier: number;
   speedIncreaseMultiplier: number;
+  maxSpeed: number;
 }
 
 export interface CollisionResult {

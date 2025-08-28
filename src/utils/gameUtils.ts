@@ -13,25 +13,29 @@ export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
     aiSpeed: 1.2,
     aiReactionTime: 0.3,
     ballSpeedMultiplier: 2.0,
-    speedIncreaseMultiplier: 1.08, // 8% increase per point
+    speedIncreaseMultiplier: 1.08,
+    maxSpeed: 12,
   },
   medium: {
     aiSpeed: 1.4,
     aiReactionTime: 0.2,
     ballSpeedMultiplier: 2.5,
-    speedIncreaseMultiplier: 1.12, // 12% increase per point
+    speedIncreaseMultiplier: 1.12,
+    maxSpeed: 15,
   },
   hard: {
     aiSpeed: 1.6,
     aiReactionTime: 0.15,
     ballSpeedMultiplier: 3.0,
-    speedIncreaseMultiplier: 1.16, // 16% increase per point
+    speedIncreaseMultiplier: 1.16,
+    maxSpeed: 18,
   },
   expert: {
     aiSpeed: 1.8,
     aiReactionTime: 0.1,
     ballSpeedMultiplier: 3.5,
-    speedIncreaseMultiplier: 1.2, // 20% increase per point
+    speedIncreaseMultiplier: 1.2,
+    maxSpeed: 22,
   },
 };
 
@@ -41,7 +45,6 @@ export const GAME_CONFIG: GameConfig = {
   paddleHeight: 80,
   gameWidth: 800,
   gameHeight: 400,
-  maxPoints: 10,
   fps: 120,
 };
 
@@ -262,6 +265,21 @@ export const saveToLeaderboard = (
 ): void => {
   const leaderboard = getLeaderboard();
   const nickname = localStorage.getItem("bounce-nickname") || "Anonymous";
+
+  // Check if an entry with the same score, nickname, and difficulty already exists
+  // to prevent duplicates from multiple saves of the same game result
+  const existingEntry = leaderboard.find(
+    (entry) =>
+      entry.nickname === nickname &&
+      entry.score === score &&
+      entry.difficulty === difficulty
+  );
+
+  // If entry already exists, don't add it again
+  if (existingEntry) {
+    return;
+  }
+
   const newEntry: LeaderboardEntry = {
     nickname,
     score,
@@ -305,6 +323,9 @@ export const getLeaderboard = (): LeaderboardEntry[] => {
       );
     }
 
+    // Clean up any duplicate entries that might exist from previous versions
+    cleanupDuplicateEntries();
+
     return migratedLeaderboard;
   } catch (error) {
     console.error("Error parsing leaderboard:", error);
@@ -314,6 +335,33 @@ export const getLeaderboard = (): LeaderboardEntry[] => {
 
 export const clearLeaderboard = (): void => {
   localStorage.removeItem("bounce-leaderboard");
+};
+
+// Utility function to clean up duplicate entries from existing leaderboard data
+export const cleanupDuplicateEntries = (): void => {
+  const leaderboard = getLeaderboard();
+  const uniqueEntries: LeaderboardEntry[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of leaderboard) {
+    // Create a unique key for each entry based on nickname, score, and difficulty
+    const key = `${entry.nickname}-${entry.score}-${entry.difficulty}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueEntries.push(entry);
+    }
+  }
+
+  // If we found duplicates, save the cleaned up version
+  if (uniqueEntries.length < leaderboard.length) {
+    localStorage.setItem("bounce-leaderboard", JSON.stringify(uniqueEntries));
+    console.log(
+      `Cleaned up ${
+        leaderboard.length - uniqueEntries.length
+      } duplicate entries`
+    );
+  }
 };
 
 // Utility functions
