@@ -78,6 +78,21 @@ const Game: React.FC<GameProps> = ({
   }, [gameState.status, onGameOver]);
 
   /**
+   * Handles keyboard events for game controls
+   */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && gameState.status === GameStatus.PLAYING) {
+        e.preventDefault(); // Prevent page scrolling
+        pauseGame();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [pauseGame, gameState.status]);
+
+  /**
    * Handles mouse movement to update player paddle position
    * @param y - The Y coordinate of the mouse
    */

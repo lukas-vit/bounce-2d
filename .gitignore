@@ -95,3 +95,4 @@ jspm_packages/
 
 # Bolt template files
 .bolt/
+.vercel

@@ -41,7 +41,7 @@ Bounce is a classic paddle ball game where players control paddles to keep a bou
 
 ### 7. Code Quality
 
-- Refactored code for better maintainability and readability
+- Refactored code for better maintainability and readability and tried to install and run the game
 
 ## 🎯 Challenges Overcome
 
