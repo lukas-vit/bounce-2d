@@ -202,14 +202,32 @@ export const saveToLeaderboard = (
   const nickname =
     localStorage.getItem(GAME_CONFIG.storage.nickname) || "Anonymous";
 
+  // Check if player already has an entry for this difficulty
+  const existingEntryIndex = leaderboard.findIndex(
+    (entry) => entry.nickname === nickname && entry.difficulty === difficulty
+  );
+
   const newEntry: LeaderboardEntry = {
     nickname,
     score,
     difficulty,
-    date: new Date().toLocaleDateString(),
+    date: new Date().toLocaleString(
+      GAME_CONFIG.leaderboard.dateFormat.locale,
+      GAME_CONFIG.leaderboard.dateFormat.options
+    ),
   };
 
-  leaderboard.push(newEntry);
+  if (existingEntryIndex !== -1) {
+    // Update existing entry if new score is higher
+    if (score > leaderboard[existingEntryIndex].score) {
+      leaderboard[existingEntryIndex] = newEntry;
+    }
+  } else {
+    // Add new entry if none exists for this player and difficulty
+    leaderboard.push(newEntry);
+  }
+
+  // Sort by score (highest first)
   leaderboard.sort((a, b) => b.score - a.score);
 
   // Keep only top scores

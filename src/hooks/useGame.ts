@@ -327,10 +327,7 @@ export const useGame = () => {
       const ballPhysics = getBallPhysicsConstants();
 
       // Check paddle collisions first
-      if (
-        checkPaddleCollision(newBall, playerPaddle, 0) ||
-        checkPaddleCollision(prevBall, playerPaddle, 0)
-      ) {
+      if (checkPaddleCollision(newBall, playerPaddle, 0)) {
         // Player paddle hit
         newBall.vx = Math.abs(newBall.vx);
 
@@ -346,13 +343,14 @@ export const useGame = () => {
         newBall.vy += hitPos * getBallSpeedMultiplier();
 
         // Award point only once per collision
+        const newScore = gameState.playerScore + 1;
         setGameState((prev) => ({
           ...prev,
-          playerScore: prev.playerScore + 1,
+          playerScore: newScore,
         }));
 
-        // Spawn power-up every 5 points (but only if none exists)
-        if ((gameState.playerScore + 1) % 5 === 0) {
+        // Spawn power-up after 2 points, then every 5 points (7, 12, 17, etc.)
+        if (newScore === 2 || (newScore > 2 && (newScore - 2) % 5 === 0)) {
           spawnPowerUp();
         }
 
@@ -374,11 +372,6 @@ export const useGame = () => {
       if (
         checkPaddleCollision(
           newBall,
-          aiPaddle,
-          getGameDimensions().width - aiPaddle.width
-        ) ||
-        checkPaddleCollision(
-          prevBall,
           aiPaddle,
           getGameDimensions().width - aiPaddle.width
         )
@@ -436,11 +429,13 @@ export const useGame = () => {
           newBall.vy = (Math.random() - 0.5) * 4; // Add some randomness to make it interesting
         } else {
           // No extra lives - game over
-          saveToLeaderboard(gameState.playerScore, gameState.difficulty);
-          setGameState((prev) => ({
-            ...prev,
-            status: GameStatus.GAME_OVER,
-          }));
+          if (gameState.status !== GameStatus.GAME_OVER) {
+            saveToLeaderboard(gameState.playerScore, gameState.difficulty);
+            setGameState((prev) => ({
+              ...prev,
+              status: GameStatus.GAME_OVER,
+            }));
+          }
         }
       } else if (scoring === "player") {
         // AI missed - reset ball

@@ -1,4 +1,4 @@
-import { Home, Pause, Play, RotateCcw } from "lucide-react";
+import { Home, Pause, Play } from "lucide-react";
 import React, { useEffect } from "react";
 
 import {
@@ -58,12 +58,11 @@ const Game: React.FC<GameProps> = ({
   useEffect(() => {
     if (extraLifeConsumed) {
       setShowExtraLifeUsed(true);
-      const timer = setTimeout(() => setShowExtraLifeUsed(false), 3000); // Show for 3 seconds
-
-      // Reset the flag after showing the toast
-      setTimeout(() => {
+      const timer = setTimeout(() => {
+        setShowExtraLifeUsed(false);
+        // Reset the flag after the toast is hidden
         resetExtraLifeConsumed();
-      }, 100);
+      }, 3000); // Show for 3 seconds
 
       return () => clearTimeout(timer);
     }
@@ -229,15 +228,6 @@ const Game: React.FC<GameProps> = ({
                 {isPaused ? "Resume" : "Pause"}
               </button>
             )}
-
-            <button
-              onClick={resetGame}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 
-                text-white rounded-lg transition-all duration-300 border border-gray-600 hover:border-gray-500"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </button>
           </div>
         </div>
       )}
