@@ -9,11 +9,30 @@ export enum GameStatus {
   LEADERBOARD = "leaderboard",
 }
 
+export enum PowerUpType {
+  SPEED_UP = "speed_up",
+  SLOW_DOWN = "slow_down",
+  PADDLE_GROW = "paddle_grow",
+  PADDLE_SHRINK = "paddle_shrink",
+  EXTRA_LIFE = "extra_life",
+}
+
+export interface PowerUp {
+  id: string;
+  type: PowerUpType;
+  x: number;
+  y: number;
+  size: number;
+  createdAt: number;
+  duration: number;
+}
+
 export interface GameState {
   status: GameStatus;
   playerScore: number;
   isPaused: boolean;
   difficulty: Difficulty;
+  extraLives: number;
 }
 
 export interface Ball {

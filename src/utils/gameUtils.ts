@@ -38,17 +38,32 @@ export const createPaddle = (isPlayer: boolean): Paddle => {
   };
 };
 
-// Simple collision detection
+// Enhanced collision detection with proper ball centering and tolerance
 export const checkPaddleCollision = (
   ball: Ball,
   paddle: Paddle,
   paddleX: number
 ): boolean => {
+  // Ball is positioned from its center, so calculate bounds from center
+  const ballLeft = ball.x - ball.size / 2;
+  const ballRight = ball.x + ball.size / 2;
+  const ballTop = ball.y - ball.size / 2;
+  const ballBottom = ball.y + ball.size / 2;
+
+  // Paddle bounds
+  const paddleLeft = paddleX;
+  const paddleRight = paddleX + paddle.width;
+  const paddleTop = paddle.y;
+  const paddleBottom = paddle.y + paddle.height;
+
+  // Generous collision detection with tolerance for better user experience
+  const tolerance = 5; // 5px tolerance for reliable collision detection
+
   return (
-    ball.x + ball.size >= paddleX &&
-    ball.x <= paddleX + paddle.width &&
-    ball.y + ball.size >= paddle.y &&
-    ball.y <= paddle.y + paddle.height
+    ballRight + tolerance >= paddleLeft &&
+    ballLeft - tolerance <= paddleRight &&
+    ballBottom + tolerance >= paddleTop &&
+    ballTop - tolerance <= paddleBottom
   );
 };
 
@@ -98,13 +113,20 @@ export const updateBall = (ball: Ball): Ball => {
     y: ball.y + ball.vy,
   };
 
-  // Wall bounce
-  if (newBall.y <= 0 || newBall.y + newBall.size >= dimensions.height) {
-    newBall.vy *= -1;
-    newBall.y = Math.max(
-      0,
-      Math.min(dimensions.height - newBall.size, newBall.y)
-    );
+  // Wall bounce with better boundary handling
+  if (newBall.y <= 0) {
+    newBall.vy = Math.abs(newBall.vy); // Ensure positive velocity
+    newBall.y = 0;
+  } else if (newBall.y + newBall.size / 2 >= dimensions.height) {
+    newBall.vy = -Math.abs(newBall.vy); // Ensure negative velocity
+    newBall.y = dimensions.height - newBall.size / 2;
+  }
+
+  // Ensure ball doesn't get stuck outside horizontal bounds
+  if (newBall.x < 0) {
+    newBall.x = 0;
+  } else if (newBall.x > dimensions.width) {
+    newBall.x = dimensions.width;
   }
 
   return newBall;

@@ -1,13 +1,19 @@
-import React from "react";
-import { Pause, Play, RotateCcw, Home } from "lucide-react";
-import { GameStatus } from "../types/game";
-import { Difficulty } from "../config/gameConfig";
-import GameBoard from "./GameBoard";
-import Ball from "./Ball";
-import Paddle from "./Paddle";
-import Leaderboard from "./Leaderboard";
+import { Home, Pause, Play, RotateCcw } from "lucide-react";
+import React, { useEffect } from "react";
+
+import {
+  Difficulty,
+  getGameDimensions,
+  getPowerUpIcon,
+  getPowerUpName,
+} from "../config/gameConfig";
 import { useGame } from "../hooks/useGame";
-import { getGameDimensions } from "../config/gameConfig";
+import { GameStatus } from "../types/game";
+import Ball from "./Ball";
+import GameBoard from "./GameBoard";
+import Leaderboard from "./Leaderboard";
+import Paddle from "./Paddle";
+import PowerUp from "./PowerUp";
 
 interface GameProps {
   difficulty: Difficulty;
@@ -25,6 +31,8 @@ const Game: React.FC<GameProps> = ({
     ball,
     playerPaddle,
     aiPaddle,
+    powerUps,
+    activePowerUps,
     startGame,
     pauseGame,
     resetGame,
@@ -32,12 +40,28 @@ const Game: React.FC<GameProps> = ({
     setGameState,
   } = useGame();
 
+  // Track when extra life is used for display
+  const [showExtraLifeUsed, setShowExtraLifeUsed] = React.useState(false);
+
   // Start the game when component mounts with the selected difficulty
-  React.useEffect(() => {
+  useEffect(() => {
     if (gameState.status === GameStatus.MENU) {
       startGame(difficulty);
     }
   }, [difficulty, startGame, gameState.status]);
+
+  // Track previous extra lives count to detect when one is used
+  const prevExtraLivesRef = React.useRef(gameState.extraLives);
+
+  // Show extra life used indicator when extra lives decrease
+  useEffect(() => {
+    if (prevExtraLivesRef.current > gameState.extraLives) {
+      setShowExtraLifeUsed(true);
+      const timer = setTimeout(() => setShowExtraLifeUsed(false), 3000); // Show for 3 seconds
+      return () => clearTimeout(timer);
+    }
+    prevExtraLivesRef.current = gameState.extraLives;
+  }, [gameState.extraLives]);
 
   const handleMouseMove = (y: number) => {
     updatePlayerPaddle(y);
@@ -81,6 +105,98 @@ const Game: React.FC<GameProps> = ({
             </div>
           </div>
 
+          {/* Active Power-ups Display */}
+          {!showLeaderboard && activePowerUps.length > 0 && (
+            <div className="fixed top-4 right-4 z-50">
+              <div className="bg-black/90 backdrop-blur-sm border border-gray-600 rounded-xl p-3 shadow-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-300 font-medium">
+                    ACTIVE
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  {activePowerUps.map((powerUp) => {
+                    const remainingTime = Math.ceil(
+                      (powerUp.duration - (Date.now() - powerUp.createdAt)) /
+                        1000
+                    );
+
+                    return (
+                      <div
+                        key={powerUp.id}
+                        className="flex flex-col items-center"
+                        title={`${getPowerUpName(
+                          powerUp.type
+                        )} - ${remainingTime}s left`}
+                      >
+                        {/* Power-up Icon with Time Ring */}
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-yellow-500 border-2 border-yellow-300">
+                            {getPowerUpIcon(powerUp.type)}
+                          </div>
+                          {/* Time Ring */}
+                          <svg
+                            className="absolute inset-0 w-8 h-8 transform -rotate-90"
+                            viewBox="0 0 32 32"
+                          >
+                            <circle
+                              cx="16"
+                              cy="16"
+                              r="14"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              fill="none"
+                              className={`${
+                                remainingTime > 10
+                                  ? "text-green-400"
+                                  : remainingTime > 5
+                                  ? "text-yellow-400"
+                                  : "text-red-400"
+                              }`}
+                              strokeDasharray={`${
+                                (remainingTime / (powerUp.duration / 1000)) * 88
+                              } 88`}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </div>
+
+                        {/* Time Badge */}
+                        <div
+                          className={`text-xs font-bold mt-1 px-1.5 py-0.5 rounded-full ${
+                            remainingTime > 10
+                              ? "bg-green-500/20 text-green-300"
+                              : remainingTime > 5
+                              ? "bg-yellow-500/20 text-yellow-300"
+                              : "bg-red-500/20 text-red-300"
+                          }`}
+                        >
+                          {remainingTime}s
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Extra Lives Display */}
+          {gameState.extraLives > 0 && (
+            <div className="flex items-center gap-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg px-4 py-2">
+              <div className="text-sm text-gray-400">Extra Lives:</div>
+              <div className="flex gap-1">
+                {Array.from({ length: gameState.extraLives }, (_, i) => (
+                  <span key={i} className="text-pink-400 text-lg">
+                    ❤️
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             {(isPlaying || isPaused) && (
               <button
@@ -123,6 +239,11 @@ const Game: React.FC<GameProps> = ({
 
             {/* Ball */}
             <Ball ball={ball} />
+
+            {/* Power-ups */}
+            {powerUps.map((powerUp) => (
+              <PowerUp key={powerUp.id} powerUp={powerUp} />
+            ))}
           </GameBoard>
 
           {/* Game Status Overlays */}
@@ -132,6 +253,17 @@ const Game: React.FC<GameProps> = ({
                 <Pause className="w-16 h-16 text-white mx-auto mb-4" />
                 <h2 className="text-3xl font-bold text-white mb-2">Paused</h2>
                 <p className="text-gray-300">Click Resume to continue</p>
+              </div>
+            </div>
+          )}
+
+          {/* Extra Life Used Indicator */}
+          {showExtraLifeUsed && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-pink-600/90 backdrop-blur-sm border border-pink-500 rounded-lg px-6 py-3 animate-bounce">
+              <div className="flex items-center gap-2 text-white">
+                <span className="text-2xl">❤️</span>
+                <span className="font-semibold">Extra Life Used!</span>
+                <span className="text-2xl">❤️</span>
               </div>
             </div>
           )}
@@ -204,7 +336,9 @@ const Game: React.FC<GameProps> = ({
             <p className="text-gray-500 text-xs">
               Move your mouse to control the left paddle • Score points every
               time you successfully hit the ball • Ball speed increases with
-              each point • Game ends when you miss the ball
+              each point • Game ends when you miss the ball • Collect power-ups
+              that appear every 5 points for special effects! • Extra life
+              power-ups give you another chance when you miss the ball!
             </p>
           </div>
         </div>

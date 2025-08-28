@@ -12,6 +12,35 @@ export const GAME_CONFIG = {
     playerPaddleSpeed: 8,
   },
 
+  // Power-up configurations
+  powerUps: {
+    speed_up: {
+      icon: "⚡",
+      color: "bg-yellow-400 border-yellow-300",
+      name: "Speed Up",
+    },
+    slow_down: {
+      icon: "🐌",
+      color: "bg-blue-400 border-blue-300",
+      name: "Slow Down",
+    },
+    paddle_grow: {
+      icon: "📏",
+      color: "bg-green-400 border-green-300",
+      name: "Paddle Grow",
+    },
+    paddle_shrink: {
+      icon: "📐",
+      color: "bg-red-400 border-red-300",
+      name: "Paddle Shrink",
+    },
+    extra_life: {
+      icon: "❤️",
+      color: "bg-pink-400 border-pink-300",
+      name: "Extra Life",
+    },
+  },
+
   // Difficulty configurations
   difficulties: {
     easy: {
@@ -137,3 +166,13 @@ export const getBallSpeedMultiplier = () =>
 export const getAISpeedIncreaseOnHit = () =>
   GAME_CONFIG.mechanics.aiSpeedIncreaseOnHit;
 export const getBallPhysicsConstants = () => GAME_CONFIG.mechanics.ballPhysics;
+
+// Power-up helper functions
+export const getPowerUpConfig = (type: string) =>
+  GAME_CONFIG.powerUps[type as keyof typeof GAME_CONFIG.powerUps];
+export const getPowerUpIcon = (type: string) =>
+  getPowerUpConfig(type)?.icon || "❓";
+export const getPowerUpColor = (type: string) =>
+  getPowerUpConfig(type)?.color || "bg-gray-400 border-gray-300";
+export const getPowerUpName = (type: string) =>
+  getPowerUpConfig(type)?.name || "Unknown";
