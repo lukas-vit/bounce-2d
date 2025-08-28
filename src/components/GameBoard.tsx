@@ -6,6 +6,11 @@ interface GameBoardProps {
   children: React.ReactNode;
 }
 
+/**
+ * GameBoard component that handles the game board and mouse movement
+ * @param onMouseMove - Callback function to handle mouse movement
+ * @param children - React nodes to render inside the game board
+ */
 const GameBoard: React.FC<GameBoardProps> = ({ onMouseMove, children }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const dimensions = getGameDimensions();
@@ -39,7 +44,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ onMouseMove, children }) => {
         />
       </div>
 
-      {/* Center line */}
       <div
         className="absolute bg-gray-600 opacity-40"
         style={{
@@ -50,7 +54,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ onMouseMove, children }) => {
         }}
       />
 
-      {/* Dashed center line */}
       <div className="absolute left-1/2 top-0 w-0.5 h-full opacity-30 transform -translate-x-0.5">
         {Array.from({ length: 20 }).map((_, i) => (
           <div

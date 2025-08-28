@@ -11,6 +11,10 @@ interface PowerUpProps {
   onCollect?: (powerUp: PowerUpType) => void;
 }
 
+/**
+ * PowerUp component that renders collectible power-ups on the game board.
+ * Displays power-up icons with appropriate colors and animations.
+ */
 const PowerUp: React.FC<PowerUpProps> = ({ powerUp, onCollect }) => {
   const [isCollected, setIsCollected] = useState(false);
 

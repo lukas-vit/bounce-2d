@@ -1,6 +1,8 @@
-// Centralized game configuration
+/**
+ * Centralized game configuration containing all game parameters, difficulty settings,
+ * power-up configurations, and helper functions.
+ */
 export const GAME_CONFIG = {
-  // Game dimensions and physics
   game: {
     width: 800,
     height: 400,
@@ -12,7 +14,6 @@ export const GAME_CONFIG = {
     playerPaddleSpeed: 8,
   },
 
-  // Power-up configurations
   powerUps: {
     speed_up: {
       icon: "⚡",
@@ -41,7 +42,6 @@ export const GAME_CONFIG = {
     },
   },
 
-  // Difficulty configurations
   difficulties: {
     easy: {
       name: "Easy",
@@ -85,22 +85,20 @@ export const GAME_CONFIG = {
     },
   },
 
-  // Game mechanics
   mechanics: {
     aiReactionSpeed: 0.1,
-    aiSpeedIncreaseOnHit: 0.3, // 30% of player's increase
+    aiSpeedIncreaseOnHit: 0.3,
     ballTrailEnabled: false,
     maxTrailLength: 18,
     trailSpacing: 8,
-    ballSpeedMultiplier: 2, // Multiplier for ball speed changes on paddle hits
-    aiMovementSmoothing: 0.1, // AI movement smoothing factor
+    ballSpeedMultiplier: 2,
+    aiMovementSmoothing: 0.1,
     ballPhysics: {
-      randomVelocityRange: 2, // Range for random ball velocity on creation
-      hitPositionMultiplier: 0.5, // Multiplier for ball direction based on hit position
+      randomVelocityRange: 2,
+      hitPositionMultiplier: 0.5,
     },
   },
 
-  // Leaderboard settings
   leaderboard: {
     maxEntries: 10,
     dateFormat: {
@@ -115,17 +113,15 @@ export const GAME_CONFIG = {
     },
   },
 
-  // Local storage keys
   storage: {
     nickname: "bounce-nickname",
     leaderboard: "bounce-leaderboard",
   },
 
-  // Game timing
   timing: {
-    ballResetDelay: 1000, // ms
-    aiUpdateRate: 60, // fps
-    gameLoopRate: 60, // fps
+    ballResetDelay: 1000,
+    aiUpdateRate: 60,
+    gameLoopRate: 60,
   },
 } as const;
 
@@ -133,21 +129,57 @@ export const GAME_CONFIG = {
 export type Difficulty = keyof typeof GAME_CONFIG.difficulties;
 export type DifficultyConfig = (typeof GAME_CONFIG.difficulties)[Difficulty];
 
-// Helper functions
+/**
+ * Gets the configuration object for a specific difficulty level
+ * @param difficulty - The difficulty level to get configuration for
+ * @returns The difficulty configuration object
+ */
 export const getDifficultyConfig = (difficulty: Difficulty) =>
   GAME_CONFIG.difficulties[difficulty];
+
+/**
+ * Gets the color class for a difficulty level
+ * @param difficulty - The difficulty level
+ * @returns The Tailwind CSS color class
+ */
 export const getDifficultyColor = (difficulty: Difficulty) =>
   GAME_CONFIG.difficulties[difficulty].color;
+
+/**
+ * Gets the label for a difficulty level
+ * @param difficulty - The difficulty level
+ * @returns The difficulty label
+ */
 export const getDifficultyLabel = (difficulty: Difficulty) =>
   GAME_CONFIG.difficulties[difficulty].label;
+
+/**
+ * Gets the description for a difficulty level
+ * @param difficulty - The difficulty level
+ * @returns The difficulty description
+ */
 export const getDifficultyDescription = (difficulty: Difficulty) =>
   GAME_CONFIG.difficulties[difficulty].description;
+
+/**
+ * Gets the name for a difficulty level
+ * @param difficulty - The difficulty level
+ * @returns The difficulty name
+ */
 export const getDifficultyName = (difficulty: Difficulty) =>
   GAME_CONFIG.difficulties[difficulty].name;
+
+/**
+ * Gets all available difficulty levels
+ * @returns Array of all difficulty levels
+ */
 export const getAllDifficulties = (): Difficulty[] =>
   Object.keys(GAME_CONFIG.difficulties) as Difficulty[];
 
-// Game-specific helper functions
+/**
+ * Gets the game dimensions and physics constants
+ * @returns Object containing game dimensions and physics values
+ */
 export const getGameDimensions = () => ({
   width: GAME_CONFIG.game.width,
   height: GAME_CONFIG.game.height,
@@ -157,22 +189,73 @@ export const getGameDimensions = () => ({
   initialBallSpeed: GAME_CONFIG.game.initialBallSpeed,
 });
 
+/**
+ * Gets the player paddle movement speed
+ * @returns The player paddle speed value
+ */
 export const getPlayerPaddleSpeed = () => GAME_CONFIG.game.playerPaddleSpeed;
+
+/**
+ * Gets the AI movement smoothing factor
+ * @returns The AI movement smoothing value
+ */
 export const getAIMovementSmoothing = () =>
   GAME_CONFIG.mechanics.aiMovementSmoothing;
+
+/**
+ * Gets the ball reset delay in milliseconds
+ * @returns The ball reset delay value
+ */
 export const getBallResetDelay = () => GAME_CONFIG.timing.ballResetDelay;
+
+/**
+ * Gets the ball speed multiplier for paddle hits
+ * @returns The ball speed multiplier value
+ */
 export const getBallSpeedMultiplier = () =>
   GAME_CONFIG.mechanics.ballSpeedMultiplier;
+
+/**
+ * Gets the AI speed increase factor when hitting the ball
+ * @returns The AI speed increase value
+ */
 export const getAISpeedIncreaseOnHit = () =>
   GAME_CONFIG.mechanics.aiSpeedIncreaseOnHit;
+
+/**
+ * Gets the ball physics constants
+ * @returns Object containing ball physics parameters
+ */
 export const getBallPhysicsConstants = () => GAME_CONFIG.mechanics.ballPhysics;
 
-// Power-up helper functions
+/**
+ * Gets the configuration for a specific power-up type
+ * @param type - The power-up type identifier
+ * @returns The power-up configuration object or undefined if not found
+ */
 export const getPowerUpConfig = (type: string) =>
   GAME_CONFIG.powerUps[type as keyof typeof GAME_CONFIG.powerUps];
+
+/**
+ * Gets the icon for a power-up type
+ * @param type - The power-up type identifier
+ * @returns The power-up icon emoji
+ */
 export const getPowerUpIcon = (type: string) =>
   getPowerUpConfig(type)?.icon || "❓";
+
+/**
+ * Gets the color classes for a power-up type
+ * @param type - The power-up type identifier
+ * @returns The Tailwind CSS color classes
+ */
 export const getPowerUpColor = (type: string) =>
   getPowerUpConfig(type)?.color || "bg-gray-400 border-gray-300";
+
+/**
+ * Gets the display name for a power-up type
+ * @param type - The power-up type identifier
+ * @returns The power-up display name
+ */
 export const getPowerUpName = (type: string) =>
   getPowerUpConfig(type)?.name || "Unknown";

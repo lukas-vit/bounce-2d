@@ -7,6 +7,10 @@ interface PaddleProps {
   isPlayer?: boolean;
 }
 
+/**
+ * Paddle component that renders either the player or AI paddle.
+ * Player paddles are blue, AI paddles are red with appropriate visual effects.
+ */
 const Paddle: React.FC<PaddleProps> = ({ paddle, x, isPlayer = false }) => {
   return (
     <div

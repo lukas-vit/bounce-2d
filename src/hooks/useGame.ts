@@ -26,8 +26,11 @@ import {
   getBallPhysicsConstants,
 } from "../config/gameConfig";
 
+/**
+ * Custom hook that manages the complete game state and logic
+ * @returns Object containing game state, entities, and control functions
+ */
 export const useGame = () => {
-  // Game state
   const [gameState, setGameState] = useState<GameState>({
     status: GameStatus.MENU,
     playerScore: 0,
@@ -36,25 +39,22 @@ export const useGame = () => {
     extraLives: 0,
   });
 
-  // Callback for when extra life is consumed
   const [extraLifeConsumed, setExtraLifeConsumed] = useState(false);
 
-  // Game entities
   const [ball, setBall] = useState<Ball>(createBall());
   const [playerPaddle, setPlayerPaddle] = useState<Paddle>(createPaddle(true));
   const [aiPaddle, setAiPaddle] = useState<Paddle>(createPaddle(false));
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
   const [activePowerUps, setActivePowerUps] = useState<PowerUp[]>([]);
 
-  // Game loop ref
   const gameLoopRef = useRef<number>();
-
-  // Ref to track active power-ups to avoid stale closures
   const activePowerUpsRef = useRef<PowerUp[]>([]);
 
-  // Power-up management
+  /**
+   * Spawns a new power-up on the game board
+   * Only spawns if no power-up currently exists
+   */
   const spawnPowerUp = useCallback(() => {
-    // Only spawn if no power-up exists
     if (powerUps.length > 0) return;
 
     const dimensions = getGameDimensions();
@@ -69,20 +69,21 @@ export const useGame = () => {
       y: Math.random() * (dimensions.height - 100) + 50,
       size: 32,
       createdAt: Date.now(),
-      duration: 15000, // 15 seconds - longer duration for better chance to collect
+      duration: 15000,
     };
 
     setPowerUps((prev) => [...prev, newPowerUp]);
 
-    // Remove power-up after duration
     setTimeout(() => {
       setPowerUps((prev) => prev.filter((pu) => pu.id !== newPowerUp.id));
     }, newPowerUp.duration);
   }, [powerUps.length]);
 
+  /**
+   * Collects a power-up and applies its effects
+   * @param powerUp - The power-up to collect
+   */
   const collectPowerUp = useCallback((powerUp: PowerUp) => {
-    // Check if this power-up is already being processed to prevent duplicates
-    // Use a ref to avoid stale closure issues
     const isAlreadyActive = activePowerUpsRef.current.some(
       (ap) => ap.id === `active_${powerUp.id}`
     );
@@ -90,7 +91,6 @@ export const useGame = () => {
       return;
     }
 
-    // Apply power-up effects
     switch (powerUp.type) {
       case PowerUpType.SPEED_UP: {
         setBall((prev) => ({
@@ -98,11 +98,10 @@ export const useGame = () => {
           vx: prev.vx * 1.5,
           vy: prev.vy * 1.5,
         }));
-        // Add to active power-ups with duration
         const speedUpActive: PowerUp = {
           ...powerUp,
           id: `active_${powerUp.id}`,
-          duration: 10000, // 10 seconds active
+          duration: 10000,
           createdAt: Date.now(),
         };
         setActivePowerUps((prev) => {
@@ -110,7 +109,6 @@ export const useGame = () => {
           activePowerUpsRef.current = newActive;
           return newActive;
         });
-        // Remove after duration
         setTimeout(() => {
           setActivePowerUps((prev) => {
             const newActive = prev.filter((pu) => pu.id !== speedUpActive.id);
@@ -126,11 +124,10 @@ export const useGame = () => {
           vx: prev.vx * 0.7,
           vy: prev.vy * 0.7,
         }));
-        // Add to active power-ups with duration
         const slowDownActive: PowerUp = {
           ...powerUp,
           id: `active_${powerUp.id}`,
-          duration: 10000, // 10 seconds active
+          duration: 10000,
           createdAt: Date.now(),
         };
         setActivePowerUps((prev) => {
@@ -138,7 +135,6 @@ export const useGame = () => {
           activePowerUpsRef.current = newActive;
           return newActive;
         });
-        // Remove after duration
         setTimeout(() => {
           setActivePowerUps((prev) => {
             const newActive = prev.filter((pu) => pu.id !== slowDownActive.id);
@@ -153,11 +149,10 @@ export const useGame = () => {
           ...prev,
           height: Math.min(prev.height * 1.3, 200),
         }));
-        // Add to active power-ups with duration
         const paddleGrowActive: PowerUp = {
           ...powerUp,
           id: `active_${powerUp.id}`,
-          duration: 15000, // 15 seconds active
+          duration: 15000,
           createdAt: Date.now(),
         };
         setActivePowerUps((prev) => {
@@ -165,7 +160,6 @@ export const useGame = () => {
           activePowerUpsRef.current = newActive;
           return newActive;
         });
-        // Remove after duration
         setTimeout(() => {
           setActivePowerUps((prev) => {
             const newActive = prev.filter(
@@ -174,7 +168,6 @@ export const useGame = () => {
             activePowerUpsRef.current = newActive;
             return newActive;
           });
-          // Reset paddle size
           setPlayerPaddle((prev) => ({
             ...prev,
             height: getGameDimensions().paddleHeight,
@@ -187,11 +180,10 @@ export const useGame = () => {
           ...prev,
           height: Math.max(prev.height * 0.8, 40),
         }));
-        // Add to active power-ups with duration
         const paddleShrinkActive: PowerUp = {
           ...powerUp,
           id: `active_${powerUp.id}`,
-          duration: 15000, // 15 seconds active
+          duration: 15000,
           createdAt: Date.now(),
         };
         setActivePowerUps((prev) => {
@@ -199,7 +191,6 @@ export const useGame = () => {
           activePowerUpsRef.current = newActive;
           return newActive;
         });
-        // Remove after duration
         setTimeout(() => {
           setActivePowerUps((prev) => {
             const newActive = prev.filter(
@@ -208,7 +199,6 @@ export const useGame = () => {
             activePowerUpsRef.current = newActive;
             return newActive;
           });
-          // Reset paddle size
           setPlayerPaddle((prev) => ({
             ...prev,
             height: getGameDimensions().paddleHeight,
@@ -224,10 +214,15 @@ export const useGame = () => {
         break;
     }
 
-    // Remove collected power-up from board
     setPowerUps((prev) => prev.filter((pu) => pu.id !== powerUp.id));
   }, []);
 
+  /**
+   * Checks if the ball collides with a power-up
+   * @param ball - The ball object
+   * @param powerUp - The power-up object
+   * @returns True if collision detected
+   */
   const checkPowerUpCollision = useCallback((ball: Ball, powerUp: PowerUp) => {
     const ballLeft = ball.x - ball.size / 2;
     const ballRight = ball.x + ball.size / 2;
@@ -247,7 +242,10 @@ export const useGame = () => {
     );
   }, []);
 
-  // Game control functions
+  /**
+   * Starts a new game with the specified difficulty
+   * @param difficulty - The difficulty level for the new game
+   */
   const startGame = useCallback((difficulty: Difficulty) => {
     setGameState({
       status: GameStatus.PLAYING,
@@ -265,6 +263,9 @@ export const useGame = () => {
     activePowerUpsRef.current = [];
   }, []);
 
+  /**
+   * Toggles the game pause state
+   */
   const pauseGame = useCallback(() => {
     setGameState((prev) => ({
       ...prev,
@@ -272,6 +273,9 @@ export const useGame = () => {
     }));
   }, []);
 
+  /**
+   * Resets the game to the initial menu state
+   */
   const resetGame = useCallback(() => {
     setGameState({
       status: GameStatus.MENU,
@@ -289,6 +293,9 @@ export const useGame = () => {
     activePowerUpsRef.current = [];
   }, []);
 
+  /**
+   * Ends the current game and transitions to game over state
+   */
   const endGame = useCallback(() => {
     setGameState((prev) => ({
       ...prev,
@@ -296,11 +303,17 @@ export const useGame = () => {
     }));
   }, []);
 
+  /**
+   * Resets the extra life consumed flag
+   */
   const resetExtraLifeConsumed = useCallback(() => {
     setExtraLifeConsumed(false);
   }, []);
 
-  // Update player paddle position
+  /**
+   * Updates the player paddle position based on mouse movement
+   * @param mouseY - The Y coordinate of the mouse
+   */
   const updatePlayerPaddle = useCallback((mouseY: number) => {
     const dimensions = getGameDimensions();
     setPlayerPaddle((prev) => ({
@@ -312,26 +325,23 @@ export const useGame = () => {
     }));
   }, []);
 
-  // Main game loop
+  /**
+   * Main game loop that updates game entities and handles collisions
+   */
   const gameLoop = useCallback(() => {
     if (gameState.status !== GameStatus.PLAYING || gameState.isPaused) {
       return;
     }
 
-    // Update AI paddle
     setAiPaddle((prev) => updateAI(prev, ball, gameState.difficulty));
 
-    // Update ball
     setBall((prevBall) => {
       const newBall = updateBall(prevBall);
       const ballPhysics = getBallPhysicsConstants();
 
-      // Check paddle collisions first
       if (checkPaddleCollision(newBall, playerPaddle, 0)) {
-        // Player paddle hit
         newBall.vx = Math.abs(newBall.vx);
 
-        // Ensure the ball doesn't get stuck inside the paddle
         if (newBall.x < 0) {
           newBall.x = 0;
         }
@@ -342,19 +352,16 @@ export const useGame = () => {
           ballPhysics.hitPositionMultiplier;
         newBall.vy += hitPos * getBallSpeedMultiplier();
 
-        // Award point only once per collision
         const newScore = gameState.playerScore + 1;
         setGameState((prev) => ({
           ...prev,
           playerScore: newScore,
         }));
 
-        // Spawn power-up after 2 points, then every 5 points (7, 12, 17, etc.)
         if (newScore === 2 || (newScore > 2 && (newScore - 2) % 5 === 0)) {
           spawnPowerUp();
         }
 
-        // Increase ball speed based on difficulty
         const config = getDifficultyConfig(gameState.difficulty);
         const currentSpeed = Math.sqrt(
           newBall.vx * newBall.vx + newBall.vy * newBall.vy
@@ -376,10 +383,8 @@ export const useGame = () => {
           getGameDimensions().width - aiPaddle.width
         )
       ) {
-        // AI paddle hit
         newBall.vx = -Math.abs(newBall.vx);
 
-        // Ensure the ball doesn't get stuck inside the paddle
         if (newBall.x > getGameDimensions().width) {
           newBall.x = getGameDimensions().width;
         }
@@ -389,7 +394,6 @@ export const useGame = () => {
           ballPhysics.hitPositionMultiplier;
         newBall.vy += hitPos * getBallSpeedMultiplier();
 
-        // Small speed increase when AI hits (proportional to difficulty)
         const config = getDifficultyConfig(gameState.difficulty);
         const currentSpeed = Math.sqrt(
           newBall.vx * newBall.vx + newBall.vy * newBall.vy
@@ -406,29 +410,22 @@ export const useGame = () => {
         newBall.vy *= speedMultiplier;
       }
 
-      // Check scoring after paddle collisions
       const scoring = checkScoring(newBall);
 
       if (scoring === "ai") {
-        // Player missed - check for extra lives
         if (gameState.extraLives > 0) {
-          // Use extra life
           setGameState((prev) => ({
             ...prev,
             extraLives: prev.extraLives - 1,
           }));
 
-          // Set flag to show extra life consumed toast
           setExtraLifeConsumed(true);
 
-          // With extra life, reset ball to center and reverse direction
-          // This gives the player a fair chance to continue
           newBall.x = getGameDimensions().width / 2;
           newBall.y = getGameDimensions().height / 2;
-          newBall.vx = -Math.abs(newBall.vx); // Reverse direction towards player
-          newBall.vy = (Math.random() - 0.5) * 4; // Add some randomness to make it interesting
+          newBall.vx = -Math.abs(newBall.vx);
+          newBall.vy = (Math.random() - 0.5) * 4;
         } else {
-          // No extra lives - game over
           if (gameState.status !== GameStatus.GAME_OVER) {
             saveToLeaderboard(gameState.playerScore, gameState.difficulty);
             setGameState((prev) => ({
@@ -438,13 +435,11 @@ export const useGame = () => {
           }
         }
       } else if (scoring === "player") {
-        // AI missed - reset ball
         setTimeout(() => {
           setBall(createBall());
         }, getBallResetDelay());
       }
 
-      // Check power-up collisions
       powerUps.forEach((powerUp) => {
         if (checkPowerUpCollision(newBall, powerUp)) {
           collectPowerUp(powerUp);
@@ -454,7 +449,6 @@ export const useGame = () => {
       return newBall;
     });
 
-    // Continue game loop with controlled timing for better collision detection
     gameLoopRef.current = requestAnimationFrame(gameLoop);
   }, [
     gameState.status,
@@ -471,7 +465,6 @@ export const useGame = () => {
     spawnPowerUp,
   ]);
 
-  // Game loop effect
   useEffect(() => {
     if (gameState.status === GameStatus.PLAYING && !gameState.isPaused) {
       gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -484,7 +477,6 @@ export const useGame = () => {
     };
   }, [gameLoop, gameState.status, gameState.isPaused]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (gameLoopRef.current) {

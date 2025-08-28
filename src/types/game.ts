@@ -1,5 +1,8 @@
 import { Difficulty } from "../config/gameConfig";
 
+/**
+ * Represents the current state of the game application
+ */
 export enum GameStatus {
   NICKNAME = "nickname",
   MENU = "menu",
@@ -9,6 +12,9 @@ export enum GameStatus {
   LEADERBOARD = "leaderboard",
 }
 
+/**
+ * Types of power-ups available in the game
+ */
 export enum PowerUpType {
   SPEED_UP = "speed_up",
   SLOW_DOWN = "slow_down",
@@ -17,6 +23,9 @@ export enum PowerUpType {
   EXTRA_LIFE = "extra_life",
 }
 
+/**
+ * Represents a power-up item that can be collected during gameplay
+ */
 export interface PowerUp {
   id: string;
   type: PowerUpType;
@@ -27,6 +36,9 @@ export interface PowerUp {
   duration: number;
 }
 
+/**
+ * Represents the overall state of the game
+ */
 export interface GameState {
   status: GameStatus;
   playerScore: number;
@@ -35,6 +47,9 @@ export interface GameState {
   extraLives: number;
 }
 
+/**
+ * Represents the game ball with position, velocity, and particle effects
+ */
 export interface Ball {
   x: number;
   y: number;
@@ -53,6 +68,9 @@ export interface Ball {
   lastParticleSpawn: number;
 }
 
+/**
+ * Represents a paddle (player or AI) with position and dimensions
+ */
 export interface Paddle {
   y: number;
   height: number;
@@ -60,6 +78,9 @@ export interface Paddle {
   speed: number;
 }
 
+/**
+ * Represents a leaderboard entry with player score and metadata
+ */
 export interface LeaderboardEntry {
   nickname: string;
   score: number;

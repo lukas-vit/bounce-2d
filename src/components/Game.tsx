@@ -22,6 +22,10 @@ interface GameProps {
   currentNickname: string;
 }
 
+/**
+ * Main game component that handles the game board, paddles, ball, and power-ups.
+ * Manages game state transitions and displays game information.
+ */
 const Game: React.FC<GameProps> = ({
   difficulty,
   onEndGame,
@@ -44,45 +48,46 @@ const Game: React.FC<GameProps> = ({
     resetExtraLifeConsumed,
   } = useGame();
 
-  // Track when extra life is used for display
   const [showExtraLifeUsed, setShowExtraLifeUsed] = React.useState(false);
 
-  // Start the game when component mounts with the selected difficulty
   useEffect(() => {
     if (gameState.status === GameStatus.MENU) {
       startGame(difficulty);
     }
   }, [difficulty, startGame, gameState.status]);
 
-  // Show extra life used indicator when extra life is consumed
   useEffect(() => {
     if (extraLifeConsumed) {
       setShowExtraLifeUsed(true);
       const timer = setTimeout(() => {
         setShowExtraLifeUsed(false);
-        // Reset the flag after the toast is hidden
         resetExtraLifeConsumed();
-      }, 3000); // Show for 3 seconds
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
   }, [extraLifeConsumed, resetExtraLifeConsumed]);
 
-  // Handle game over state transition
   useEffect(() => {
     if (gameState.status === GameStatus.GAME_OVER) {
-      // Small delay to show the game over screen before transitioning
       const timer = setTimeout(() => {
         onGameOver();
-      }, 2000); // 2 seconds delay
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [gameState.status, onGameOver]);
 
+  /**
+   * Handles mouse movement to update player paddle position
+   * @param y - The Y coordinate of the mouse
+   */
   const handleMouseMove = (y: number) => {
     updatePlayerPaddle(y);
   };
 
+  /**
+   * Handles ending the current game and returning to menu
+   */
   const handleEndGame = () => {
     onEndGame();
   };
@@ -94,7 +99,6 @@ const Game: React.FC<GameProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8">
-      {/* Header with score and controls */}
       {!showLeaderboard && (
         <div className="mb-8 flex items-center justify-between w-full max-w-4xl">
           <div className="flex items-center gap-6">
@@ -108,7 +112,6 @@ const Game: React.FC<GameProps> = ({
             </button>
           </div>
 
-          {/* Player Score Display */}
           <div className="flex items-center justify-center bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl px-8 py-4 relative">
             <div className="text-center">
               <div className="text-lg font-medium text-cyan-400 mb-1">
@@ -120,7 +123,6 @@ const Game: React.FC<GameProps> = ({
               <div className="text-sm text-gray-400">Score</div>
             </div>
 
-            {/* Extra Lives Display - Absolutely positioned next to score */}
             {gameState.extraLives > 0 && (
               <div className="absolute -right-24 top-1/2 transform -translate-y-1/2 flex items-center gap-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg px-3 py-2">
                 <div className="text-xs text-gray-400">Extra:</div>
@@ -135,7 +137,6 @@ const Game: React.FC<GameProps> = ({
             )}
           </div>
 
-          {/* Active Power-ups Display */}
           {!showLeaderboard && activePowerUps.length > 0 && (
             <div className="fixed top-4 right-4 z-50">
               <div className="bg-black/90 backdrop-blur-sm border border-gray-600 rounded-xl p-3 shadow-xl">
@@ -161,12 +162,10 @@ const Game: React.FC<GameProps> = ({
                           powerUp.type
                         )} - ${remainingTime}s left`}
                       >
-                        {/* Power-up Icon with Time Ring */}
                         <div className="relative">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-yellow-500 border-2 border-yellow-300">
                             {getPowerUpIcon(powerUp.type)}
                           </div>
-                          {/* Time Ring */}
                           <svg
                             className="absolute inset-0 w-8 h-8 transform -rotate-90"
                             viewBox="0 0 32 32"
@@ -193,7 +192,6 @@ const Game: React.FC<GameProps> = ({
                           </svg>
                         </div>
 
-                        {/* Time Badge */}
                         <div
                           className={`text-xs font-bold mt-1 px-1.5 py-0.5 rounded-full ${
                             remainingTime > 10
@@ -232,11 +230,9 @@ const Game: React.FC<GameProps> = ({
         </div>
       )}
 
-      {/* Game Board Container */}
       {!showLeaderboard && (
         <div className="relative">
           <GameBoard onMouseMove={handleMouseMove}>
-            {/* Paddles */}
             <Paddle paddle={playerPaddle} x={0} isPlayer={true} />
             <Paddle
               paddle={aiPaddle}
@@ -244,16 +240,13 @@ const Game: React.FC<GameProps> = ({
               isPlayer={false}
             />
 
-            {/* Ball */}
             <Ball ball={ball} />
 
-            {/* Power-ups */}
             {powerUps.map((powerUp) => (
               <PowerUp key={powerUp.id} powerUp={powerUp} />
             ))}
           </GameBoard>
 
-          {/* Game Status Overlays */}
           {isPaused && (
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center rounded-lg">
               <div className="text-center">
@@ -264,7 +257,6 @@ const Game: React.FC<GameProps> = ({
             </div>
           )}
 
-          {/* Extra Life Used Indicator */}
           {showExtraLifeUsed && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-pink-600/90 backdrop-blur-sm border border-pink-500 rounded-lg px-6 py-3 animate-bounce">
               <div className="flex items-center gap-2 text-white">
@@ -315,7 +307,6 @@ const Game: React.FC<GameProps> = ({
         </div>
       )}
 
-      {/* Leaderboard Display */}
       {showLeaderboard && (
         <div className="w-full max-w-6xl mx-auto">
           <Leaderboard
@@ -330,7 +321,6 @@ const Game: React.FC<GameProps> = ({
         </div>
       )}
 
-      {/* Game Info */}
       {!showLeaderboard && (
         <div className="mt-8 text-center max-w-2xl">
           <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-lg p-4">

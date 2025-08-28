@@ -12,7 +12,10 @@ import {
   getBallPhysicsConstants,
 } from "../config/gameConfig";
 
-// Factory functions
+/**
+ * Creates a new ball with initial position and velocity
+ * @returns A new Ball object positioned at the center of the game board
+ */
 export const createBall = (): Ball => {
   const dimensions = getGameDimensions();
   const ballPhysics = getBallPhysicsConstants();
@@ -30,6 +33,11 @@ export const createBall = (): Ball => {
   };
 };
 
+/**
+ * Creates a new paddle with initial position and properties
+ * @param isPlayer - Whether this paddle is for the player (true) or AI (false)
+ * @returns A new Paddle object positioned at the center of the game board
+ */
 export const createPaddle = (isPlayer: boolean): Paddle => {
   const dimensions = getGameDimensions();
   const playerSpeed = getPlayerPaddleSpeed();
@@ -43,26 +51,29 @@ export const createPaddle = (isPlayer: boolean): Paddle => {
   };
 };
 
-// Enhanced collision detection with proper ball centering and tolerance
+/**
+ * Checks collision between a ball and paddle with tolerance for better user experience
+ * @param ball - The ball object to check collision for
+ * @param paddle - The paddle object to check collision against
+ * @param paddleX - The X coordinate of the paddle
+ * @returns True if collision detected, false otherwise
+ */
 export const checkPaddleCollision = (
   ball: Ball,
   paddle: Paddle,
   paddleX: number
 ): boolean => {
-  // Ball is positioned from its center, so calculate bounds from center
   const ballLeft = ball.x - ball.size / 2;
   const ballRight = ball.x + ball.size / 2;
   const ballTop = ball.y - ball.size / 2;
   const ballBottom = ball.y + ball.size / 2;
 
-  // Paddle bounds
   const paddleLeft = paddleX;
   const paddleRight = paddleX + paddle.width;
   const paddleTop = paddle.y;
   const paddleBottom = paddle.y + paddle.height;
 
-  // Generous collision detection with tolerance for better user experience
-  const tolerance = 5; // 5px tolerance for reliable collision detection
+  const tolerance = 5;
 
   return (
     ballRight + tolerance >= paddleLeft &&
@@ -72,11 +83,21 @@ export const checkPaddleCollision = (
   );
 };
 
+/**
+ * Checks if the ball collides with the top or bottom walls
+ * @param ball - The ball object to check
+ * @returns True if wall collision detected, false otherwise
+ */
 export const checkWallCollision = (ball: Ball): boolean => {
   const dimensions = getGameDimensions();
   return ball.y <= 0 || ball.y + ball.size >= dimensions.height;
 };
 
+/**
+ * Determines which player scored based on ball position
+ * @param ball - The ball object to check
+ * @returns "player" if AI missed, "ai" if player missed, null if no scoring
+ */
 export const checkScoring = (ball: Ball): "player" | "ai" | null => {
   const dimensions = getGameDimensions();
   if (ball.x <= 0) return "ai";
@@ -84,7 +105,13 @@ export const checkScoring = (ball: Ball): "player" | "ai" | null => {
   return null;
 };
 
-// Simple AI movement
+/**
+ * Updates AI paddle position to track the ball
+ * @param aiPaddle - The current AI paddle state
+ * @param ball - The ball object to track
+ * @param difficulty - The current game difficulty
+ * @returns Updated paddle with new position
+ */
 export const updateAI = (
   aiPaddle: Paddle,
   ball: Ball,
@@ -107,39 +134,38 @@ export const updateAI = (
   };
 };
 
-// Ball physics (simplified)
+/**
+ * Updates ball position, handles wall collisions, and manages particle effects
+ * @param ball - The current ball state
+ * @returns Updated ball with new position and particles
+ */
 export const updateBall = (ball: Ball): Ball => {
   const dimensions = getGameDimensions();
 
-  // Update position
   const newBall = {
     ...ball,
     x: ball.x + ball.vx,
     y: ball.y + ball.vy,
   };
 
-  // Wall bounce with better boundary handling
   if (newBall.y <= 0) {
-    newBall.vy = Math.abs(newBall.vy); // Ensure positive velocity
+    newBall.vy = Math.abs(newBall.vy);
     newBall.y = 0;
   } else if (newBall.y + newBall.size / 2 >= dimensions.height) {
-    newBall.vy = -Math.abs(newBall.vy); // Ensure negative velocity
+    newBall.vy = -Math.abs(newBall.vy);
     newBall.y = dimensions.height - newBall.size / 2;
   }
 
-  // Ensure ball doesn't get stuck outside horizontal bounds
   if (newBall.x < 0) {
     newBall.x = 0;
   } else if (newBall.x > dimensions.width) {
     newBall.x = dimensions.width;
   }
 
-  // Particle system - create engaging particles at regular intervals
   const currentTime = Date.now();
-  const particleSpawnInterval = 60; // Spawn particles every 60ms for smooth effect
+  const particleSpawnInterval = 60;
 
   if (currentTime - ball.lastParticleSpawn > particleSpawnInterval) {
-    // Create new particles with different types for variety
     const particleTypes: Array<"sparkle" | "glow" | "trail"> = [
       "sparkle",
       "glow",
@@ -148,7 +174,6 @@ export const updateBall = (ball: Ball): Ball => {
     const randomType =
       particleTypes[Math.floor(Math.random() * particleTypes.length)];
 
-    // Add some randomness to particle movement
     const particleVx = ball.vx * 0.1 + (Math.random() - 0.5) * 2;
     const particleVy = ball.vy * 0.1 + (Math.random() - 0.5) * 2;
 
@@ -158,27 +183,23 @@ export const updateBall = (ball: Ball): Ball => {
       vx: particleVx,
       vy: particleVy,
       age: 0,
-      size: ball.size * (0.3 + Math.random() * 0.4), // Random size variation
+      size: ball.size * (0.3 + Math.random() * 0.4),
       type: randomType,
     };
 
-    // Add new particle and keep only recent ones for performance
-    const updatedParticles = [newParticle, ...ball.particles.slice(0, 19)]; // Keep 20 particles max
+    const updatedParticles = [newParticle, ...ball.particles.slice(0, 19)];
     newBall.particles = updatedParticles;
     newBall.lastParticleSpawn = currentTime;
   } else {
-    // Update existing particles
     newBall.particles = ball.particles
       .map((particle) => ({
         ...particle,
         x: particle.x + particle.vx,
         y: particle.y + particle.vy,
         age: particle.age + 1,
-        // Add gravity effect for more natural movement
         vy: particle.vy + 0.1,
       }))
       .filter((particle) => {
-        // Remove particles that are too old or off-screen
         const dimensions = getGameDimensions();
         return (
           particle.age < 80 &&
@@ -193,7 +214,11 @@ export const updateBall = (ball: Ball): Ball => {
   return newBall;
 };
 
-// Leaderboard management
+/**
+ * Saves a player's score to the leaderboard
+ * @param score - The player's final score
+ * @param difficulty - The difficulty level the game was played on
+ */
 export const saveToLeaderboard = (
   score: number,
   difficulty: Difficulty
@@ -202,7 +227,6 @@ export const saveToLeaderboard = (
   const nickname =
     localStorage.getItem(GAME_CONFIG.storage.nickname) || "Anonymous";
 
-  // Check if player already has an entry for this difficulty
   const existingEntryIndex = leaderboard.findIndex(
     (entry) => entry.nickname === nickname && entry.difficulty === difficulty
   );
@@ -218,19 +242,15 @@ export const saveToLeaderboard = (
   };
 
   if (existingEntryIndex !== -1) {
-    // Update existing entry if new score is higher
     if (score > leaderboard[existingEntryIndex].score) {
       leaderboard[existingEntryIndex] = newEntry;
     }
   } else {
-    // Add new entry if none exists for this player and difficulty
     leaderboard.push(newEntry);
   }
 
-  // Sort by score (highest first)
   leaderboard.sort((a, b) => b.score - a.score);
 
-  // Keep only top scores
   const topScores = leaderboard.slice(0, GAME_CONFIG.leaderboard.maxEntries);
   localStorage.setItem(
     GAME_CONFIG.storage.leaderboard,
@@ -238,6 +258,10 @@ export const saveToLeaderboard = (
   );
 };
 
+/**
+ * Retrieves the leaderboard from localStorage
+ * @returns Array of leaderboard entries, or empty array if none exist
+ */
 export const getLeaderboard = (): LeaderboardEntry[] => {
   try {
     const stored = localStorage.getItem(GAME_CONFIG.storage.leaderboard);
@@ -247,11 +271,18 @@ export const getLeaderboard = (): LeaderboardEntry[] => {
   }
 };
 
+/**
+ * Clears all leaderboard data from localStorage
+ */
 export const clearLeaderboard = (): void => {
   localStorage.removeItem(GAME_CONFIG.storage.leaderboard);
 };
 
-// Utility functions
+/**
+ * Formats a difficulty level for display
+ * @param difficulty - The difficulty level to format
+ * @returns The formatted difficulty name
+ */
 export const formatDifficulty = (difficulty: Difficulty): string => {
   return getDifficultyConfig(difficulty).name;
 };

@@ -5,18 +5,25 @@ interface NicknameInputProps {
   onNicknameSubmit: (nickname: string) => void;
 }
 
+/**
+ * NicknameInput component that allows players to enter their nickname before starting the game.
+ * Validates input and saves the nickname to localStorage for future use.
+ */
 const NicknameInput: React.FC<NicknameInputProps> = ({ onNicknameSubmit }) => {
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Focus the input when component mounts
     const input = document.getElementById("nickname-input");
     if (input) {
       input.focus();
     }
   }, []);
 
+  /**
+   * Handles form submission and validates the nickname
+   * @param e - The form submission event
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedNickname = nickname.trim();
@@ -31,11 +38,14 @@ const NicknameInput: React.FC<NicknameInputProps> = ({ onNicknameSubmit }) => {
       return;
     }
 
-    // Save nickname to localStorage
     localStorage.setItem("bounce-nickname", trimmedNickname);
     onNicknameSubmit(trimmedNickname);
   };
 
+  /**
+   * Handles Enter key press to submit the form
+   * @param e - The keyboard event
+   */
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSubmit(e);

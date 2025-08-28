@@ -5,6 +5,10 @@ import Leaderboard from "./components/Leaderboard";
 import NicknameInput from "./components/NicknameInput";
 import { Difficulty, GameStatus } from "./types/game";
 
+/**
+ * Main application component that manages the game state and renders appropriate components
+ * based on the current game status (nickname input, menu, playing, leaderboard).
+ */
 function App() {
   const [appState, setAppState] = useState<GameStatus>(GameStatus.NICKNAME);
   const [selectedDifficulty, setSelectedDifficulty] =
@@ -12,56 +16,80 @@ function App() {
   const [nickname, setNickname] = useState<string>("");
 
   useEffect(() => {
-    // Check if nickname already exists in localStorage
-    const savedNickname = localStorage.getItem('bounce-nickname');
+    const savedNickname = localStorage.getItem("bounce-nickname");
     if (savedNickname) {
       setNickname(savedNickname);
       setAppState(GameStatus.MENU);
     }
   }, []);
 
+  /**
+   * Handles nickname submission and transitions to the main menu
+   * @param newNickname - The nickname entered by the user
+   */
   const handleNicknameSubmit = (newNickname: string) => {
     setNickname(newNickname);
     setAppState(GameStatus.MENU);
   };
 
+  /**
+   * Starts a new game with the selected difficulty
+   * @param difficulty - The difficulty level selected by the user
+   */
   const handleStartGame = (difficulty: Difficulty) => {
     setSelectedDifficulty(difficulty);
     setAppState(GameStatus.PLAYING);
   };
 
+  /**
+   * Ends the current game and returns to the main menu
+   */
   const handleEndGame = () => {
     setAppState(GameStatus.MENU);
   };
 
+  /**
+   * Handles game over and transitions to the leaderboard
+   */
   const handleGameOver = () => {
     setAppState(GameStatus.LEADERBOARD);
   };
 
+  /**
+   * Shows the leaderboard from the main menu
+   */
   const handleShowLeaderboard = () => {
     setAppState(GameStatus.LEADERBOARD);
   };
 
+  /**
+   * Returns to the main menu from other screens
+   */
   const handleBackToMenu = () => {
     setAppState(GameStatus.MENU);
   };
 
-  // Render appropriate component based on app state
+  /**
+   * Renders the appropriate component based on the current app state
+   * @returns The component to display based on current game status
+   */
   const renderComponent = () => {
     switch (appState) {
       case GameStatus.NICKNAME:
         return <NicknameInput onNicknameSubmit={handleNicknameSubmit} />;
       case GameStatus.PLAYING:
         return (
-          <Game 
-            difficulty={selectedDifficulty} 
-            onEndGame={handleEndGame} 
+          <Game
+            difficulty={selectedDifficulty}
+            onEndGame={handleEndGame}
             onGameOver={handleGameOver}
-            currentNickname={nickname} 
+            currentNickname={nickname}
           />
         );
       case GameStatus.LEADERBOARD:
-        return <Leaderboard onBack={handleBackToMenu} currentNickname={nickname} />;
+        return (
+          <Leaderboard onBack={handleBackToMenu} currentNickname={nickname} />
+        );
       case GameStatus.MENU:
       default:
         return (

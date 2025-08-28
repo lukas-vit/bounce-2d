@@ -1,6 +1,6 @@
 import React from "react";
 import { Play, Trophy, User, Edit3 } from "lucide-react";
-import { Difficulty } from "../types/game";
+import { Difficulty } from "../config/gameConfig";
 import {
   formatDifficulty,
   getDifficultyColor,
@@ -16,6 +16,13 @@ interface MenuProps {
   currentNickname: string;
 }
 
+/**
+ * Menu component that displays the main menu and allows starting a game
+ * @param onStartGame - Callback function to start a game with a difficulty
+ * @param onShowLeaderboard - Callback function to show the leaderboard
+ * @param onChangeNickname - Callback function to change the player's nickname
+ * @param currentNickname - The current nickname of the player
+ */
 const Menu: React.FC<MenuProps> = ({
   onStartGame,
   onShowLeaderboard,
@@ -30,7 +37,6 @@ const Menu: React.FC<MenuProps> = ({
         </h1>
       </div>
 
-      {/* Current Nickname Display */}
       <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-4 mb-6 shadow-lg max-w-md w-full">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -93,7 +99,6 @@ const Menu: React.FC<MenuProps> = ({
           <span className="text-lg font-medium text-white">Leaderboard</span>
         </button>
 
-        {/* Difficulty Info */}
         <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
           <h3 className="text-sm font-semibold text-gray-300 mb-2">
             Difficulty Effects:

@@ -12,6 +12,11 @@ interface LeaderboardProps {
   currentNickname?: string;
 }
 
+/**
+ * Leaderboard component that displays the leaderboard and allows clearing scores
+ * @param onBack - Callback function to go back to the menu
+ * @param currentNickname - The current nickname of the player
+ */
 const Leaderboard: React.FC<LeaderboardProps> = ({
   onBack,
   currentNickname,
@@ -25,7 +30,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       )
     ) {
       clearLeaderboard();
-      // Force re-render by updating the component
       window.location.reload();
     }
   };
