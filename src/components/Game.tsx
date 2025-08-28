@@ -109,7 +109,7 @@ const Game: React.FC<GameProps> = ({
           </div>
 
           {/* Player Score Display */}
-          <div className="flex items-center justify-center bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl px-8 py-4">
+          <div className="flex items-center justify-center bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl px-8 py-4 relative">
             <div className="text-center">
               <div className="text-lg font-medium text-cyan-400 mb-1">
                 {currentNickname}
@@ -119,6 +119,20 @@ const Game: React.FC<GameProps> = ({
               </div>
               <div className="text-sm text-gray-400">Score</div>
             </div>
+
+            {/* Extra Lives Display - Absolutely positioned next to score */}
+            {gameState.extraLives > 0 && (
+              <div className="absolute -right-24 top-1/2 transform -translate-y-1/2 flex items-center gap-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg px-3 py-2">
+                <div className="text-xs text-gray-400">Extra:</div>
+                <div className="flex gap-1">
+                  {Array.from({ length: gameState.extraLives }, (_, i) => (
+                    <span key={i} className="text-pink-400 text-base">
+                      ❤️
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Active Power-ups Display */}
@@ -195,20 +209,6 @@ const Game: React.FC<GameProps> = ({
                     );
                   })}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Extra Lives Display */}
-          {gameState.extraLives > 0 && (
-            <div className="flex items-center gap-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg px-4 py-2">
-              <div className="text-sm text-gray-400">Extra Lives:</div>
-              <div className="flex gap-1">
-                {Array.from({ length: gameState.extraLives }, (_, i) => (
-                  <span key={i} className="text-pink-400 text-lg">
-                    ❤️
-                  </span>
-                ))}
               </div>
             </div>
           )}
