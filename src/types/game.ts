@@ -1,4 +1,4 @@
-export type Difficulty = "easy" | "medium" | "hard" | "expert";
+import { Difficulty } from "../config/gameConfig";
 
 export enum GameStatus {
   NICKNAME = "nickname",
@@ -11,35 +11,24 @@ export enum GameStatus {
 
 export interface GameState {
   status: GameStatus;
-  playerPoints: number;
-  aiPoints: number;
-  difficulty: Difficulty;
-  gameStarted: boolean;
+  playerScore: number;
   isPaused: boolean;
+  difficulty: Difficulty;
 }
 
-export interface BallState {
+export interface Ball {
   x: number;
   y: number;
-  dx: number;
-  dy: number;
-  speed: number;
+  vx: number;
+  vy: number;
   size: number;
 }
 
-export interface PaddleState {
+export interface Paddle {
   y: number;
   height: number;
   width: number;
   speed: number;
-  isPlayer: boolean;
-}
-
-export interface TrailPoint {
-  x: number;
-  y: number;
-  opacity: number;
-  id: number;
 }
 
 export interface LeaderboardEntry {
@@ -47,30 +36,4 @@ export interface LeaderboardEntry {
   score: number;
   difficulty: Difficulty;
   date: string;
-  timestamp: number;
-}
-
-export interface GameConfig {
-  ballSize: number;
-  paddleWidth: number;
-  paddleHeight: number;
-  gameWidth: number;
-  gameHeight: number;
-  fps: number;
-}
-
-export interface DifficultyConfig {
-  aiSpeed: number;
-  aiReactionTime: number;
-  ballSpeedMultiplier: number;
-  speedIncreaseMultiplier: number;
-  maxSpeed: number;
-}
-
-export interface CollisionResult {
-  ball: BallState;
-  playerScored: boolean;
-  aiScored: boolean;
-  shouldAwardPoint: boolean;
-  gameOver: boolean;
 }

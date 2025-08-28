@@ -1,7 +1,13 @@
 import React from "react";
 import { Play, Trophy, User, Edit3 } from "lucide-react";
 import { Difficulty } from "../types/game";
-import { formatDifficulty, getDifficultyColor } from "../utils/gameUtils";
+import {
+  formatDifficulty,
+  getDifficultyColor,
+  getDifficultyDescription,
+  getDifficultyLabel,
+  DIFFICULTIES,
+} from "../utils/gameUtils";
 
 interface MenuProps {
   onStartGame: (difficulty: Difficulty) => void;
@@ -16,8 +22,6 @@ const Menu: React.FC<MenuProps> = ({
   onChangeNickname,
   currentNickname,
 }) => {
-  const difficulties: Difficulty[] = ["easy", "medium", "hard", "expert"];
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8">
       <div className="text-center mb-6">
@@ -53,7 +57,7 @@ const Menu: React.FC<MenuProps> = ({
         </h2>
 
         <div className="space-y-4 mb-8">
-          {difficulties.map((difficulty) => (
+          {DIFFICULTIES.map((difficulty) => (
             <button
               key={difficulty}
               onClick={() => onStartGame(difficulty)}
@@ -72,10 +76,7 @@ const Menu: React.FC<MenuProps> = ({
                   difficulty
                 )}`}
               >
-                {difficulty === "easy" && "Beginner"}
-                {difficulty === "medium" && "Normal"}
-                {difficulty === "hard" && "Challenging"}
-                {difficulty === "expert" && "Insane"}
+                {getDifficultyLabel(difficulty)}
               </span>
             </button>
           ))}
@@ -98,22 +99,15 @@ const Menu: React.FC<MenuProps> = ({
             Difficulty Effects:
           </h3>
           <div className="text-xs text-gray-400 space-y-1">
-            <p>
-              • <span className="text-green-400">Easy:</span> Gentle start, slow
-              & steady
-            </p>
-            <p>
-              • <span className="text-yellow-400">Medium:</span> Balanced
-              challenge, smooth progression
-            </p>
-            <p>
-              • <span className="text-orange-400">Hard:</span> Fast-paced, gets
-              wild quickly
-            </p>
-            <p>
-              • <span className="text-red-400">Expert:</span> Lightning fast,
-              pure chaos!
-            </p>
+            {DIFFICULTIES.map((difficulty) => (
+              <p key={difficulty}>
+                •{" "}
+                <span className={getDifficultyColor(difficulty)}>
+                  {formatDifficulty(difficulty)}:
+                </span>{" "}
+                {getDifficultyDescription(difficulty)}
+              </p>
+            ))}
           </div>
         </div>
       </div>

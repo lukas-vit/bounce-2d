@@ -1,8 +1,8 @@
 import React from "react";
-import { PaddleState } from "../types/game";
+import { Paddle as PaddleType } from "../types/game";
 
 interface PaddleProps {
-  paddle: PaddleState;
+  paddle: PaddleType;
   x: number;
   isPlayer?: boolean;
 }

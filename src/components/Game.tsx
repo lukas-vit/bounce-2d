@@ -1,12 +1,13 @@
 import React from "react";
 import { Pause, Play, RotateCcw, Home } from "lucide-react";
-import { Difficulty, GameStatus } from "../types/game";
-import { GAME_CONFIG } from "../utils/gameUtils";
+import { GameStatus } from "../types/game";
+import { Difficulty } from "../config/gameConfig";
 import GameBoard from "./GameBoard";
 import Ball from "./Ball";
 import Paddle from "./Paddle";
 import Leaderboard from "./Leaderboard";
 import { useGame } from "../hooks/useGame";
+import { getGameDimensions } from "../config/gameConfig";
 
 interface GameProps {
   difficulty: Difficulty;
@@ -24,7 +25,6 @@ const Game: React.FC<GameProps> = ({
     ball,
     playerPaddle,
     aiPaddle,
-    ballTrail,
     startGame,
     pauseGame,
     resetGame,
@@ -34,10 +34,10 @@ const Game: React.FC<GameProps> = ({
 
   // Start the game when component mounts with the selected difficulty
   React.useEffect(() => {
-    if (!gameState.gameStarted) {
+    if (gameState.status === GameStatus.MENU) {
       startGame(difficulty);
     }
-  }, [difficulty, startGame, gameState.gameStarted]);
+  }, [difficulty, startGame, gameState.status]);
 
   const handleMouseMove = (y: number) => {
     updatePlayerPaddle(y);
@@ -49,7 +49,7 @@ const Game: React.FC<GameProps> = ({
 
   const isGameOver = gameState.status === GameStatus.GAME_OVER;
   const isPlaying = gameState.status === GameStatus.PLAYING;
-  const isPaused = gameState.status === GameStatus.PAUSED;
+  const isPaused = gameState.isPaused;
   const showLeaderboard = gameState.status === GameStatus.LEADERBOARD;
 
   return (
@@ -68,16 +68,16 @@ const Game: React.FC<GameProps> = ({
             </button>
           </div>
 
-          {/* Player Points Display */}
+          {/* Player Score Display */}
           <div className="flex items-center justify-center bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl px-8 py-4">
             <div className="text-center">
               <div className="text-lg font-medium text-cyan-400 mb-1">
                 {currentNickname}
               </div>
               <div className="text-3xl font-bold text-blue-400">
-                {gameState.playerPoints}
+                {gameState.playerScore}
               </div>
-              <div className="text-sm text-gray-400">Points</div>
+              <div className="text-sm text-gray-400">Score</div>
             </div>
           </div>
 
@@ -117,12 +117,12 @@ const Game: React.FC<GameProps> = ({
             <Paddle paddle={playerPaddle} x={0} isPlayer={true} />
             <Paddle
               paddle={aiPaddle}
-              x={GAME_CONFIG.gameWidth - GAME_CONFIG.paddleWidth}
+              x={getGameDimensions().width - getGameDimensions().paddleWidth}
               isPlayer={false}
             />
 
-            {/* Ball with trail */}
-            <Ball ball={ball} trail={ballTrail} />
+            {/* Ball */}
+            <Ball ball={ball} />
           </GameBoard>
 
           {/* Game Status Overlays */}
@@ -146,7 +146,7 @@ const Game: React.FC<GameProps> = ({
                   Game Over
                 </h2>
                 <p className="text-xl text-gray-300 mb-6">
-                  Final Score: {currentNickname} - {gameState.playerPoints}{" "}
+                  Final Score: {currentNickname} - {gameState.playerScore}{" "}
                   points
                 </p>
                 <div className="flex gap-4 justify-center">
@@ -204,8 +204,7 @@ const Game: React.FC<GameProps> = ({
             <p className="text-gray-500 text-xs">
               Move your mouse to control the left paddle • Score points every
               time you successfully hit the ball • Ball speed increases with
-              each point (more on harder difficulties) • Game ends only when you
-              miss the ball
+              each point • Game ends when you miss the ball
             </p>
           </div>
         </div>

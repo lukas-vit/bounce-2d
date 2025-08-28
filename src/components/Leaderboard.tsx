@@ -1,9 +1,10 @@
 import React from "react";
-import { Trophy, ArrowLeft, Medal, Award } from "lucide-react";
+import { Trophy, ArrowLeft, Medal, Award, Trash2 } from "lucide-react";
 import {
   getLeaderboard,
   formatDifficulty,
   getDifficultyColor,
+  clearLeaderboard,
 } from "../utils/gameUtils";
 
 interface LeaderboardProps {
@@ -17,7 +18,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 }) => {
   const leaderboard = getLeaderboard();
 
-  console.log("Leaderboard data:", leaderboard); // Debug log
+  const handleClearLeaderboard = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all scores? This cannot be undone."
+      )
+    ) {
+      clearLeaderboard();
+      // Force re-render by updating the component
+      window.location.reload();
+    }
+  };
 
   const getRankIcon = (index: number) => {
     switch (index) {
@@ -51,7 +62,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
             Leaderboard
           </h1>
-          <div className="w-20"></div> {/* Spacer for centering */}
+          <button
+            onClick={handleClearLeaderboard}
+            className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors duration-300 
+              hover:bg-red-900/20 px-3 py-2 rounded-lg"
+            title="Clear all scores"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
         </div>
 
         {leaderboard.length === 0 ? (
@@ -107,9 +125,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         )}
 
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
-            Top 10 scores are saved locally
-          </p>
+          <p className="text-sm text-gray-500">Top 10 scores</p>
         </div>
       </div>
     </div>
