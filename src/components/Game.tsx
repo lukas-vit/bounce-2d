@@ -19,7 +19,6 @@ import PowerUp from "./PowerUp";
 interface GameProps {
   difficulty: Difficulty;
   onEndGame: () => void;
-  onGameOver: () => void;
   currentNickname: string;
 }
 
@@ -30,7 +29,6 @@ interface GameProps {
 const Game: React.FC<GameProps> = ({
   difficulty,
   onEndGame,
-  onGameOver,
   currentNickname,
 }) => {
   const {
@@ -79,15 +77,6 @@ const Game: React.FC<GameProps> = ({
     }
   }, [extraLifeConsumed, resetExtraLifeConsumed]);
 
-  useEffect(() => {
-    if (gameState.status === GameStatus.GAME_OVER) {
-      const timer = setTimeout(() => {
-        onGameOver();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [gameState.status, onGameOver]);
-
   /**
    * Handles keyboard events for game controls
    */
@@ -127,40 +116,40 @@ const Game: React.FC<GameProps> = ({
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-2 sm:p-8">
       {!showLeaderboard && (
         <div
-          className={`mb-4 sm:mb-8 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl gap-4 ${
+          className={`mb-2 sm:mb-8 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl gap-2 sm:gap-4 ${
             isMobile ? "px-2" : ""
           }`}
         >
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-6">
             <button
               onClick={handleEndGame}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 
-                text-white rounded-lg transition-all duration-300 border border-gray-600 hover:border-gray-500 text-sm sm:text-base"
+              className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 
+                text-white rounded-lg transition-all duration-300 border border-gray-600 hover:border-gray-500 text-xs sm:text-base"
             >
               <Home className="w-4 h-4" />
               {isMobile ? "Menu" : "Menu"}
             </button>
           </div>
 
-          <div className="flex items-center justify-center bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl px-4 sm:px-8 py-3 sm:py-4 relative">
+          <div className="flex items-center justify-center bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl px-2 sm:px-8 py-2 sm:py-4 relative">
             <div className="text-center">
-              <div className="text-sm sm:text-lg font-medium text-cyan-400 mb-1">
+              <div className="text-xs sm:text-lg font-medium text-cyan-400 mb-1">
                 {currentNickname}
               </div>
-              <div className="text-2xl sm:text-3xl font-bold text-blue-400">
+              <div className="text-xl sm:text-3xl font-bold text-blue-400">
                 {gameState.playerScore}
               </div>
               <div className="text-xs sm:text-sm text-gray-400">Score</div>
             </div>
 
             {gameState.extraLives > 0 && (
-              <div className="absolute -right-16 sm:-right-24 top-1/2 transform -translate-y-1/2 flex items-center gap-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg px-2 sm:px-3 py-2">
+              <div className="absolute -right-12 sm:-right-24 top-1/2 transform -translate-y-1/2 flex items-center gap-1 sm:gap-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg px-1 sm:px-3 py-1 sm:py-2">
                 <div className="text-xs text-gray-400">Extra:</div>
                 <div className="flex gap-1">
                   {Array.from({ length: gameState.extraLives }, (_, i) => (
                     <span
                       key={i}
-                      className="text-pink-400 text-sm sm:text-base"
+                      className="text-pink-400 text-xs sm:text-base"
                     >
                       ❤️
                     </span>
@@ -202,21 +191,21 @@ const Game: React.FC<GameProps> = ({
                         <div className="relative">
                           <div
                             className={`${
-                              isMobile ? "w-6 h-6" : "w-8 h-8"
+                              isMobile ? "w-8 h-8" : "w-8 h-8"
                             } rounded-full flex items-center justify-center text-xs sm:text-sm bg-yellow-500 border-2 border-yellow-300`}
                           >
                             {getPowerUpIcon(powerUp.type)}
                           </div>
                           <svg
                             className={`absolute inset-0 ${
-                              isMobile ? "w-6 h-6" : "w-8 h-8"
+                              isMobile ? "w-8 h-8" : "w-8 h-8"
                             } transform -rotate-90`}
-                            viewBox={`0 0 ${isMobile ? "24 24" : "32 32"}`}
+                            viewBox={`0 0 ${isMobile ? "32 32" : "32 32"}`}
                           >
                             <circle
-                              cx={isMobile ? "12" : "16"}
-                              cy={isMobile ? "12" : "16"}
-                              r={isMobile ? "10" : "14"}
+                              cx={isMobile ? "16" : "16"}
+                              cy={isMobile ? "16" : "16"}
+                              r={isMobile ? "14" : "14"}
                               stroke="currentColor"
                               strokeWidth="2"
                               fill="none"
@@ -229,8 +218,8 @@ const Game: React.FC<GameProps> = ({
                               }`}
                               strokeDasharray={`${
                                 (remainingTime / (powerUp.duration / 1000)) *
-                                (isMobile ? 63 : 88)
-                              } ${isMobile ? "63" : "88"}`}
+                                (isMobile ? 88 : 88)
+                              } ${isMobile ? "88" : "88"}`}
                               strokeLinecap="round"
                             />
                           </svg>
@@ -255,12 +244,12 @@ const Game: React.FC<GameProps> = ({
             </div>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {(isPlaying || isPaused) && (
               <button
                 onClick={pauseGame}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-500 
-                  text-white rounded-lg transition-all duration-300 border border-purple-500 hover:border-purple-400 text-sm sm:text-base"
+                className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-purple-600 hover:bg-purple-500 
+                  text-white rounded-lg transition-all duration-300 border border-purple-500 hover:border-purple-400 text-xs sm:text-base"
               >
                 {isPaused ? (
                   <Play className="w-4 h-4" />
@@ -301,10 +290,10 @@ const Game: React.FC<GameProps> = ({
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center rounded-lg">
               <div className="text-center">
                 <Pause className="w-12 sm:w-16 h-12 sm:h-16 text-white mx-auto mb-4" />
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                <h2 className="text-xl sm:text-3xl font-bold text-white mb-2">
                   Paused
                 </h2>
-                <p className="text-gray-300 text-sm sm:text-base">
+                <p className="text-gray-300 text-xs sm:text-base">
                   {isMobile
                     ? "Tap Resume to continue"
                     : "Click Resume to continue"}
@@ -314,47 +303,68 @@ const Game: React.FC<GameProps> = ({
           )}
 
           {showExtraLifeUsed && (
-            <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 bg-pink-600/90 backdrop-blur-sm border border-pink-500 rounded-lg px-4 sm:px-6 py-2 sm:py-3 animate-bounce">
-              <div className="flex items-center gap-2 text-white text-sm sm:text-base">
-                <span className="text-xl sm:text-2xl">❤️</span>
-                <span className="font-semibold">Extra Life Used!</span>
-                <span className="text-xl sm:text-2xl">❤️</span>
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <div className="bg-pink-600/90 backdrop-blur-sm border border-pink-500 rounded-lg px-4 sm:px-8 py-3 sm:py-5 animate-bounce shadow-2xl">
+                <div className="flex items-center gap-2 sm:gap-3 text-white text-base sm:text-xl">
+                  <span className="text-xl sm:text-3xl">❤️</span>
+                  <span className="font-bold">Extra Life Used!</span>
+                  <span className="text-xl sm:text-3xl">❤️</span>
+                </div>
               </div>
             </div>
           )}
 
           {isGameOver && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
-              <div className="text-center bg-gray-800/90 p-4 sm:p-8 rounded-2xl border border-gray-700 mx-4">
-                <div className="mb-4 sm:mb-6">
-                  <div className="text-4xl sm:text-6xl mb-4">💀</div>
+            <div className="fixed inset-0  backdrop-blur-sm flex items-center justify-center z-[100]">
+              <div className="text-center bg-gray-800/90 p-3 sm:p-8 rounded-2xl border border-gray-700 mx-2 sm:mx-4">
+                <div className="mb-3 sm:mb-6">
+                  <div className="text-3xl sm:text-6xl mb-3 sm:mb-4">💀</div>
                 </div>
-                <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-red-400">
+                <h2 className="text-xl sm:text-4xl font-bold mb-3 sm:mb-4 text-red-400">
                   Game Over
                 </h2>
-                <p className="text-lg sm:text-xl text-gray-300 mb-4 sm:mb-6">
+                <p className="text-base sm:text-xl text-gray-300 mb-3 sm:mb-6">
                   Final Score: {currentNickname} - {gameState.playerScore}{" "}
                   points
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                <div className="flex flex-col gap-2 sm:gap-4 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center">
+                    <button
+                      onClick={resetGame}
+                      className="px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-600 to-green-500 
+                        hover:from-green-500 hover:to-green-400 text-white rounded-xl transition-all duration-300 
+                        transform hover:scale-105 border-2 border-green-500 hover:border-green-400
+                        flex items-center justify-center gap-2 sm:gap-3 shadow-lg hover:shadow-green-500/25"
+                    >
+                      <span className="text-sm sm:text-lg font-medium">
+                        🎮 Play Again
+                      </span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        setGameState((prev) => ({
+                          ...prev,
+                          status: GameStatus.LEADERBOARD,
+                        }))
+                      }
+                      className="px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-600 to-purple-500 
+                        hover:from-purple-500 hover:to-purple-400 text-white rounded-xl transition-all duration-300 
+                        transform hover:scale-105 border-2 border-purple-500 hover:border-purple-400
+                        flex items-center justify-center gap-2 sm:gap-3 shadow-lg hover:shadow-purple-500/25"
+                    >
+                      <span className="text-sm sm:text-lg font-medium">
+                        Leaderboard
+                      </span>
+                    </button>
+                  </div>
                   <button
-                    onClick={resetGame}
-                    className="px-4 sm:px-6 py-2 sm:py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg 
-                      transition-all duration-300 border border-green-500 hover:border-green-400 text-sm sm:text-base"
+                    onClick={onEndGame}
+                    className="px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-gray-700 to-gray-600 
+                      hover:from-gray-600 hover:to-gray-500 text-white rounded-xl transition-all duration-300 
+                      transform hover:scale-105 border-2 border-gray-600 hover:border-cyan-400
+                      flex items-center justify-center gap-2 sm:gap-3 shadow-lg"
                   >
-                    Play Again
-                  </button>
-                  <button
-                    onClick={() =>
-                      setGameState((prev) => ({
-                        ...prev,
-                        status: GameStatus.LEADERBOARD,
-                      }))
-                    }
-                    className="px-4 sm:px-6 py-2 sm:py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg 
-                      transition-all duration-300 border border-purple-500 hover:border-purple-400 text-sm sm:text-base"
-                  >
-                    Leaderboard
+                    <span className="text-sm sm:text-lg font-medium">Menu</span>
                   </button>
                 </div>
               </div>
@@ -364,7 +374,20 @@ const Game: React.FC<GameProps> = ({
       )}
 
       {showLeaderboard && (
-        <div className="w-full max-w-6xl mx-auto px-2 sm:px-0">
+        <div className="w-full max-w-6xl mx-auto px-2 sm:px-0 relative z-[80]">
+          <div className="mb-2 sm:mb-8 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-6">
+              <button
+                onClick={handleEndGame}
+                className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 
+                  text-white rounded-lg transition-all duration-300 border border-gray-600 hover:border-gray-500 text-xs sm:text-base"
+              >
+                <Home className="w-4 h-4" />
+                {isMobile ? "Menu" : "Menu"}
+              </button>
+            </div>
+          </div>
+
           <Leaderboard
             onBack={() =>
               setGameState((prev) => ({
@@ -378,8 +401,8 @@ const Game: React.FC<GameProps> = ({
       )}
 
       {!showLeaderboard && (
-        <div className="mt-4 sm:mt-8 text-center max-w-2xl px-2 sm:px-0">
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-lg p-3 sm:p-4">
+        <div className="mt-8 mb-16 sm:mb-0 text-center max-w-2xl px-2 sm:px-0">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-lg p-2 sm:p-4">
             <p className="text-gray-400 text-xs sm:text-sm mb-2">
               <span className="font-semibold text-white">Player:</span>{" "}
               <span className="text-cyan-400">{currentNickname}</span> •{" "}
@@ -388,8 +411,8 @@ const Game: React.FC<GameProps> = ({
             </p>
             <p className="text-gray-500 text-xs">
               {isMobile
-                ? "Touch and drag to control the left paddle • Score points every time you successfully hit the ball • Ball speed increases with each point • Game ends when you miss the ball • Collect power-ups that appear every 5 points for special effects! • Extra life power-ups give you another chance when you miss the ball!"
-                : "Move your mouse to control the left paddle • Score points every time you successfully hit the ball • Ball speed increases with each point • Game ends when you miss the ball • Collect power-ups that appear every 5 points for special effects! • Extra life power-ups give you another chance when you miss the ball!"}
+                ? "Touch and drag to control paddle • Score points • Collect power-ups every 5 points"
+                : "Move mouse to control paddle • Score points • Collect power-ups every 5 points"}
             </p>
           </div>
         </div>

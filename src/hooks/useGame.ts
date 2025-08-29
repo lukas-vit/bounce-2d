@@ -211,6 +211,12 @@ export const useGame = () => {
           ...prev,
           extraLives: prev.extraLives + 1,
         }));
+        // Slow down the ball when collecting extra life to help player catch it
+        setBall((prev) => ({
+          ...prev,
+          vx: prev.vx * 0.8,
+          vy: prev.vy * 0.8,
+        }));
         break;
     }
 
@@ -423,8 +429,9 @@ export const useGame = () => {
 
           newBall.x = getGameDimensions().width / 2;
           newBall.y = getGameDimensions().height / 2;
-          newBall.vx = -Math.abs(newBall.vx);
-          newBall.vy = (Math.random() - 0.5) * 4;
+          // Slow down the ball when using extra life to give player a better chance
+          newBall.vx = -Math.abs(newBall.vx) * 0.7;
+          newBall.vy = (Math.random() - 0.5) * 4 * 0.7;
         } else {
           if (gameState.status !== GameStatus.GAME_OVER) {
             saveToLeaderboard(gameState.playerScore, gameState.difficulty);

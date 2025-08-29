@@ -49,13 +49,6 @@ function App() {
   };
 
   /**
-   * Handles game over and transitions to the leaderboard
-   */
-  const handleGameOver = () => {
-    setAppState(GameStatus.LEADERBOARD);
-  };
-
-  /**
    * Shows the leaderboard from the main menu
    */
   const handleShowLeaderboard = () => {
@@ -82,7 +75,6 @@ function App() {
           <Game
             difficulty={selectedDifficulty}
             onEndGame={handleEndGame}
-            onGameOver={handleGameOver}
             currentNickname={nickname}
           />
         );
